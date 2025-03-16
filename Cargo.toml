@@ -1,13 +1,13 @@
 [package]
-name = "butterfly"
+name = "monarch-butterfly"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-num-complex = "0.4.6"
+num-complex = "0.4"
 
 [dev-dependencies]
-criterion = "0.5.1"
+criterion = "0.5"
 rustfft = "6.2.0"
 
 [[bench]]
