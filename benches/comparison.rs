@@ -69,5 +69,27 @@ fn compare64(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, compare64);
+fn compare128(c: &mut Criterion) {
+    let mut planner = FftPlanner::<f32>::new();
+    let p = planner.plan_fft_forward(128);
+
+    let mut input = vec![Complex::ZERO; 128];
+    let mut scratch = vec![Complex::ZERO; p.get_inplace_scratch_len()];
+
+    c.bench_function("rustfft-128", |b| {
+        b.iter(|| {
+            p.process_with_scratch(&mut input, &mut scratch);
+        })
+    });
+
+    let input = [Complex::ZERO; 64];
+
+    c.bench_function("michael-128", |b| {
+        b.iter(|| {
+            let _ = butterfly64(black_box(input));
+        })
+    });
+}
+
+criterion_group!(benches, compare128);
 criterion_main!(benches);
