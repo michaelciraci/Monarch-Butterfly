@@ -10,7 +10,7 @@ num-complex = "0.4"
 
 [dev-dependencies]
 criterion = "0.5"
-rustfft = "6.2.0"
+rustfft = { version = "6.2.0", default-features = false }
 
 [[bench]]
 name = "comparison"

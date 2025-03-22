@@ -1,4 +1,4 @@
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use monarch_butterfly::*;
 use num_complex::Complex;
 use rustfft::FftPlanner;

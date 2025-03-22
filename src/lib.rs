@@ -2,6 +2,8 @@ use std::f32::consts::PI;
 
 use num_complex::Complex;
 
+pub mod mixed;
+
 #[inline]
 pub fn butterfly1(x: [Complex<f32>; 1]) -> [Complex<f32>; 1] {
     x
