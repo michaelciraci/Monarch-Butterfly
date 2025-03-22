@@ -6,6 +6,7 @@ description = "FFTs for powers of 2"
 license = "MIT"
 
 [dependencies]
+monarch-derive = { path = "crates/monarch-derive" }
 num-complex = "0.4"
 
 [dev-dependencies]
