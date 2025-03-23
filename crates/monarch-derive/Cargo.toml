@@ -1,7 +1,9 @@
 [package]
 name = "monarch-derive"
-version = "0.1.0"
-edition = "2024"
+version = "0.2.0"
+edition = "2021"
+description = "FFTs for powers of 2"
+license = "MIT"
 
 [lib]
 proc-macro = true
