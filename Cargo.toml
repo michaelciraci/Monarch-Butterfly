@@ -4,6 +4,10 @@ version = "0.2.0"
 edition = "2021"
 description = "FFTs for powers of 2"
 license = "MIT"
+documentation = "https://docs.rs/monarch-butterfly"
+homepage = "https://github.com/michaelciraci/Monarch-Butterfly"
+repository = "https://github.com/michaelciraci/Monarch-Butterfly"
+rust-version = "1.61"
 
 [dependencies]
 monarch-derive = "0.2"
