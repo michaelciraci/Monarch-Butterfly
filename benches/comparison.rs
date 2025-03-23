@@ -135,5 +135,5 @@ fn compare512(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, compare512);
+criterion_group!(benches, compare16, compare32, compare64, compare128, compare256, compare512);
 criterion_main!(benches);

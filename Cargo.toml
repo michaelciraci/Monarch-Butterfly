@@ -1,6 +1,6 @@
 [package]
 name = "monarch-butterfly"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "FFTs for powers of 2"
 license = "MIT"
@@ -8,6 +8,7 @@ license = "MIT"
 [dependencies]
 monarch-derive = { path = "crates/monarch-derive" }
 num-complex = "0.4"
+num-traits = "0.2"
 
 [dev-dependencies]
 criterion = "0.5"
