@@ -4,6 +4,9 @@
 //! functions to allow the compiler to maximize the SIMD throughput available
 //! on the given CPU.
 //! 
+//! This library will use all SIMD features your CPU has available including AVX512,
+//! assuming you compile with those features (`RUSTFLAGS="-C target-cpu=native" cargo build`).
+//! 
 //! This library implements FFTs for both `f32` and `f64` for the following sizes:
 //! 
 //! ```no_compile
