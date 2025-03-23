@@ -1,3 +1,6 @@
+//! This crate is not meant to be used on its own. This crate containsthe under the hood procedural macros to autogenerate
+//! FFTs for [monarch-butterfly](https://crates.io/crates/monarch-butterfly)
+
 use proc_macro::{Span, TokenStream};
 use quote::quote;
 use syn::Ident;

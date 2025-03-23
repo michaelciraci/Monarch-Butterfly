@@ -4,6 +4,10 @@ version = "0.2.0"
 edition = "2021"
 description = "FFTs for powers of 2"
 license = "MIT"
+documentation = "https://docs.rs/monarch-derive"
+homepage = "https://github.com/michaelciraci/Monarch-Butterfly/tree/main/crates/monarch-derive"
+repository = "https://github.com/michaelciraci/Monarch-Butterfly/tree/main/crates/monarch-derive"
+rust-version = "1.61"
 
 [lib]
 proc-macro = true
