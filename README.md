@@ -31,3 +31,6 @@ let input: Vec<_> = (0..8).map(|i| Complex::new(i as f32, 0.0)).collect();
 let output_slice = fft8(&input);
 let output_vec = fft8(input);
 ```
+
+In a way, this is a re-write of [RustFFT](https://github.com/ejmahler/RustFFT) in a "const" fashion that allows for more inlining.
+Credit is given to Elliott Mahler as the RustFFT original author.
