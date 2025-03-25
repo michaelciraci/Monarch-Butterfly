@@ -132,6 +132,70 @@ pub fn fft6<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex
     [row1[0], row2[1], row3[0], row1[1], row2[0], row3[1]]
 }
 
+#[inline]
+pub fn fft7<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 7] {
+    let n = 7;
+    let x = input.as_ref();
+    assert_eq!(n, x.len());
+
+    let twiddle1: Complex<T> = Complex::new(
+        T::from(0.62348980185873359).unwrap(),
+        T::from(-0.78183148246802969).unwrap(),
+    );
+    let twiddle2: Complex<T> = Complex::new(
+        T::from(-0.22252093395631434).unwrap(),
+        T::from(-0.97492791218182361).unwrap(),
+    );
+    let twiddle3: Complex<T> = Complex::new(
+        T::from(-0.90096886790241903).unwrap(),
+        T::from(-0.43388373911755823).unwrap(),
+    );
+
+    let x16p = x[1] + x[6];
+    let x16n = x[1] - x[6];
+    let x25p = x[2] + x[5];
+    let x25n = x[2] - x[5];
+    let x34p = x[3] + x[4];
+    let x34n = x[3] - x[4];
+    let sum = x[0] + x16p + x25p + x34p;
+
+    let x16re_a = x[0].re + twiddle1.re * x16p.re + twiddle2.re * x25p.re + twiddle3.re * x34p.re;
+    let x16re_b = twiddle1.im * x16n.im + twiddle2.im * x25n.im + twiddle3.im * x34n.im;
+    let x25re_a = x[0].re + twiddle1.re * x34p.re + twiddle2.re * x16p.re + twiddle3.re * x25p.re;
+    let x25re_b = -twiddle1.im * x34n.im + twiddle2.im * x16n.im - twiddle3.im * x25n.im;
+    let x34re_a = x[0].re + twiddle1.re * x25p.re + twiddle2.re * x34p.re + twiddle3.re * x16p.re;
+    let x34re_b = -twiddle1.im * x25n.im + twiddle2.im * x34n.im + twiddle3.im * x16n.im;
+    let x16im_a = x[0].im + twiddle1.re * x16p.im + twiddle2.re * x25p.im + twiddle3.re * x34p.im;
+    let x16im_b = twiddle1.im * x16n.re + twiddle2.im * x25n.re + twiddle3.im * x34n.re;
+    let x25im_a = x[0].im + twiddle1.re * x34p.im + twiddle2.re * x16p.im + twiddle3.re * x25p.im;
+    let x25im_b = -twiddle1.im * x34n.re + twiddle2.im * x16n.re - twiddle3.im * x25n.re;
+    let x34im_a = x[0].im + twiddle1.re * x25p.im + twiddle2.re * x34p.im + twiddle3.re * x16p.im;
+    let x34im_b = twiddle1.im * x25n.re - twiddle2.im * x34n.re - twiddle3.im * x16n.re;
+
+    let out1re = x16re_a - x16re_b;
+    let out1im = x16im_a + x16im_b;
+    let out2re = x25re_a - x25re_b;
+    let out2im = x25im_a + x25im_b;
+    let out3re = x34re_a - x34re_b;
+    let out3im = x34im_a - x34im_b;
+    let out4re = x34re_a + x34re_b;
+    let out4im = x34im_a + x34im_b;
+    let out5re = x25re_a + x25re_b;
+    let out5im = x25im_a - x25im_b;
+    let out6re = x16re_a + x16re_b;
+    let out6im = x16im_a - x16im_b;
+
+    [
+        sum,
+        Complex::new(out1re, out1im),
+        Complex::new(out2re, out2im),
+        Complex::new(out3re, out3im),
+        Complex::new(out4re, out4im),
+        Complex::new(out5re, out5im),
+        Complex::new(out6re, out6im),
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use num_complex::Complex;
@@ -244,6 +308,38 @@ mod tests {
         assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
         assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
         assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
+    }
+
+    #[test]
+    fn test_fft7() {
+        let mut p = rustfft::FftPlanner::new();
+        let plan = p.plan_fft_forward(7);
+        let mut buf = vec![
+            Complex::<f64>::new(0.0, 0.0),
+            Complex::new(1.0, 0.0),
+            Complex::new(2.0, 0.0),
+            Complex::new(3.0, 0.0),
+            Complex::new(4.0, 0.0),
+            Complex::new(5.0, 0.0),
+            Complex::new(6.0, 0.0),
+        ];
+
+        let monarch = fft7(&buf);
+        plan.process(&mut buf);
+
+        assert_eq!(monarch[0], buf[0]);
+        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
+        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
+        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
+        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
+        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
+        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
+        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
+        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
+        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
+        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
+        assert!((monarch[6].re - buf[6].re).abs() < 0.0000001);
+        assert!((monarch[6].im - buf[6].im).abs() < 0.0000001);
     }
 
     #[test]
