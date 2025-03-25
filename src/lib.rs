@@ -116,6 +116,22 @@ pub fn fft5<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex
     ]
 }
 
+#[inline]
+pub fn fft6<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 6] {
+    let n = 6;
+    let x = input.as_ref();
+    assert_eq!(n, x.len());
+
+    let left = fft3([x[0], x[2], x[4]]);
+    let right = fft3([x[3], x[5], x[1]]);
+
+    let row1 = fft2([left[0], right[0]]);
+    let row2 = fft2([left[1], right[1]]);
+    let row3 = fft2([left[2], right[2]]);
+
+    [row1[0], row2[1], row3[0], row1[1], row2[0], row3[1]]
+}
+
 #[cfg(test)]
 mod tests {
     use num_complex::Complex;
@@ -190,13 +206,44 @@ mod tests {
 
         plan.process(&mut buf);
 
-        dbg!(&monarch);
-        dbg!(&buf);
         assert_eq!(monarch[0], buf[0]);
         assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
         assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
         assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
         assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
+        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
+        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
+        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
+        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
+    }
+
+    #[test]
+    fn test_fft6() {
+        let mut p = rustfft::FftPlanner::new();
+        let plan = p.plan_fft_forward(6);
+        let mut buf = vec![
+            Complex::<f64>::new(0.0, 0.0),
+            Complex::new(1.0, 0.0),
+            Complex::new(2.0, 0.0),
+            Complex::new(3.0, 0.0),
+            Complex::new(4.0, 0.0),
+            Complex::new(5.0, 0.0),
+        ];
+
+        let monarch = fft6(&buf);
+        plan.process(&mut buf);
+
+        assert_eq!(monarch[0], buf[0]);
+        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
+        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
+        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
+        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
+        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
+        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
+        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
+        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
+        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
+        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
     }
 
     #[test]
