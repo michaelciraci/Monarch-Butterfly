@@ -196,6 +196,38 @@ pub fn fft7<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex
     ]
 }
 
+#[inline]
+pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 9] {
+    let n = 9;
+    let x = input.as_ref();
+    assert_eq!(n, x.len());
+
+    let twiddle1: Complex<T> = Complex::new(
+        T::from(0.76604444311897801).unwrap(),
+        T::from(-0.64278760968653925).unwrap(),
+    );
+    let twiddle2: Complex<T> = Complex::new(
+        T::from(0.17364817766693041).unwrap(),
+        T::from(-0.98480775301220802).unwrap(),
+    );
+    let twiddle4: Complex<T> = Complex::new(
+        T::from(-0.93969262078590832).unwrap(),
+        T::from(-0.34202014332566888).unwrap(),
+    );
+
+    let first = fft3([x[0], x[3], x[6]]);
+    let second = fft3([x[1], x[4], x[7]]);
+    let third = fft3([x[2], x[5], x[8]]);
+
+    let row0 = fft3([first[0], second[0], third[0]]);
+    let row1 = fft3([first[1], second[1] * twiddle1, third[1] * twiddle2]);
+    let row2 = fft3([first[2], second[2] * twiddle2, third[2] * twiddle4]);
+
+    [
+        row0[0], row1[0], row2[0], row0[1], row1[1], row2[1], row0[2], row1[2], row2[2],
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use num_complex::Complex;
@@ -347,6 +379,44 @@ mod tests {
         let a = butterfly((1..9).map(|i| Complex::new(i as f32, 0.0)).collect());
         assert_eq!(a[0], Complex::new(36.0, 0.0));
         assert_eq!(a[6], Complex::new(-4.0, -4.0));
+    }
+
+    #[test]
+    fn test_fft9() {
+        let mut p = rustfft::FftPlanner::new();
+        let plan = p.plan_fft_forward(9);
+        let mut buf = vec![
+            Complex::<f64>::new(0.0, 0.0),
+            Complex::new(1.0, 0.0),
+            Complex::new(2.0, 0.0),
+            Complex::new(3.0, 0.0),
+            Complex::new(4.0, 0.0),
+            Complex::new(5.0, 0.0),
+            Complex::new(6.0, 0.0),
+            Complex::new(7.0, 0.0),
+            Complex::new(8.0, 0.0),
+        ];
+
+        let monarch = fft9(&buf);
+        plan.process(&mut buf);
+
+        assert_eq!(monarch[0], buf[0]);
+        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
+        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
+        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
+        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
+        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
+        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
+        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
+        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
+        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
+        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
+        assert!((monarch[6].re - buf[6].re).abs() < 0.0000001);
+        assert!((monarch[6].im - buf[6].im).abs() < 0.0000001);
+        assert!((monarch[7].re - buf[7].re).abs() < 0.0000001);
+        assert!((monarch[7].im - buf[7].im).abs() < 0.0000001);
+        assert!((monarch[8].re - buf[8].re).abs() < 0.0000001);
+        assert!((monarch[8].im - buf[8].im).abs() < 0.0000001);
     }
 
     #[test]
