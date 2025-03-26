@@ -248,6 +248,192 @@ pub fn fft10<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
     ]
 }
 
+#[inline]
+pub fn fft11<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 11] {
+    let n = 11;
+    let x = input.as_ref();
+    assert_eq!(n, x.len());
+
+    let twiddle1: Complex<T> = Complex::new(
+        T::from(0.84125353283118121).unwrap(),
+        T::from(-0.54064081745559756).unwrap(),
+    );
+    let twiddle2: Complex<T> = Complex::new(
+        T::from(0.41541501300188644).unwrap(),
+        T::from(-0.90963199535451833).unwrap(),
+    );
+    let twiddle3: Complex<T> = Complex::new(
+        T::from(-0.142314838273285).unwrap(),
+        T::from(-0.9898214418809328).unwrap(),
+    );
+    let twiddle4: Complex<T> = Complex::new(
+        T::from(-0.65486073394528499).unwrap(),
+        T::from(-0.75574957435425838).unwrap(),
+    );
+    let twiddle5: Complex<T> = Complex::new(
+        T::from(-0.95949297361449736).unwrap(),
+        T::from(-0.28173255684142962).unwrap(),
+    );
+
+    let x110p = x[1] + x[10];
+    let x110n = x[1] - x[10];
+    let x29p = x[2] + x[9];
+    let x29n = x[2] - x[9];
+    let x38p = x[3] + x[8];
+    let x38n = x[3] - x[8];
+    let x47p = x[4] + x[7];
+    let x47n = x[4] - x[7];
+    let x56p = x[5] + x[6];
+    let x56n = x[5] - x[6];
+    let sum = x[0] + x110p + x29p + x38p + x47p + x56p;
+    let b110re_a = x[0].re
+        + twiddle1.re * x110p.re
+        + twiddle2.re * x29p.re
+        + twiddle3.re * x38p.re
+        + twiddle4.re * x47p.re
+        + twiddle5.re * x56p.re;
+    let b110re_b = twiddle1.im * x110n.im
+        + twiddle2.im * x29n.im
+        + twiddle3.im * x38n.im
+        + twiddle4.im * x47n.im
+        + twiddle5.im * x56n.im;
+    let b29re_a = x[0].re
+        + twiddle2.re * x110p.re
+        + twiddle4.re * x29p.re
+        + twiddle5.re * x38p.re
+        + twiddle3.re * x47p.re
+        + twiddle1.re * x56p.re;
+    let b29re_b = twiddle2.im * x110n.im
+        + twiddle4.im * x29n.im
+        + -twiddle5.im * x38n.im
+        + -twiddle3.im * x47n.im
+        + -twiddle1.im * x56n.im;
+    let b38re_a = x[0].re
+        + twiddle3.re * x110p.re
+        + twiddle5.re * x29p.re
+        + twiddle2.re * x38p.re
+        + twiddle1.re * x47p.re
+        + twiddle4.re * x56p.re;
+    let b38re_b = twiddle3.im * x110n.im
+        + -twiddle5.im * x29n.im
+        + -twiddle2.im * x38n.im
+        + twiddle1.im * x47n.im
+        + twiddle4.im * x56n.im;
+    let b47re_a = x[0].re
+        + twiddle4.re * x110p.re
+        + twiddle3.re * x29p.re
+        + twiddle1.re * x38p.re
+        + twiddle5.re * x47p.re
+        + twiddle2.re * x56p.re;
+    let b47re_b = twiddle4.im * x110n.im
+        + -twiddle3.im * x29n.im
+        + twiddle1.im * x38n.im
+        + twiddle5.im * x47n.im
+        + -twiddle2.im * x56n.im;
+    let b56re_a = x[0].re
+        + twiddle5.re * x110p.re
+        + twiddle1.re * x29p.re
+        + twiddle4.re * x38p.re
+        + twiddle2.re * x47p.re
+        + twiddle3.re * x56p.re;
+    let b56re_b = twiddle5.im * x110n.im
+        + -twiddle1.im * x29n.im
+        + twiddle4.im * x38n.im
+        + -twiddle2.im * x47n.im
+        + twiddle3.im * x56n.im;
+
+    let b110im_a = x[0].im
+        + twiddle1.re * x110p.im
+        + twiddle2.re * x29p.im
+        + twiddle3.re * x38p.im
+        + twiddle4.re * x47p.im
+        + twiddle5.re * x56p.im;
+    let b110im_b = twiddle1.im * x110n.re
+        + twiddle2.im * x29n.re
+        + twiddle3.im * x38n.re
+        + twiddle4.im * x47n.re
+        + twiddle5.im * x56n.re;
+    let b29im_a = x[0].im
+        + twiddle2.re * x110p.im
+        + twiddle4.re * x29p.im
+        + twiddle5.re * x38p.im
+        + twiddle3.re * x47p.im
+        + twiddle1.re * x56p.im;
+    let b29im_b = twiddle2.im * x110n.re
+        + twiddle4.im * x29n.re
+        + -twiddle5.im * x38n.re
+        + -twiddle3.im * x47n.re
+        + -twiddle1.im * x56n.re;
+    let b38im_a = x[0].im
+        + twiddle3.re * x110p.im
+        + twiddle5.re * x29p.im
+        + twiddle2.re * x38p.im
+        + twiddle1.re * x47p.im
+        + twiddle4.re * x56p.im;
+    let b38im_b = twiddle3.im * x110n.re
+        + -twiddle5.im * x29n.re
+        + -twiddle2.im * x38n.re
+        + twiddle1.im * x47n.re
+        + twiddle4.im * x56n.re;
+    let b47im_a = x[0].im
+        + twiddle4.re * x110p.im
+        + twiddle3.re * x29p.im
+        + twiddle1.re * x38p.im
+        + twiddle5.re * x47p.im
+        + twiddle2.re * x56p.im;
+    let b47im_b = twiddle4.im * x110n.re
+        + -twiddle3.im * x29n.re
+        + twiddle1.im * x38n.re
+        + twiddle5.im * x47n.re
+        + -twiddle2.im * x56n.re;
+    let b56im_a = x[0].im
+        + twiddle5.re * x110p.im
+        + twiddle1.re * x29p.im
+        + twiddle4.re * x38p.im
+        + twiddle2.re * x47p.im
+        + twiddle3.re * x56p.im;
+    let b56im_b = twiddle5.im * x110n.re
+        + -twiddle1.im * x29n.re
+        + twiddle4.im * x38n.re
+        + -twiddle2.im * x47n.re
+        + twiddle3.im * x56n.re;
+
+    let out1re = b110re_a - b110re_b;
+    let out1im = b110im_a + b110im_b;
+    let out2re = b29re_a - b29re_b;
+    let out2im = b29im_a + b29im_b;
+    let out3re = b38re_a - b38re_b;
+    let out3im = b38im_a + b38im_b;
+    let out4re = b47re_a - b47re_b;
+    let out4im = b47im_a + b47im_b;
+    let out5re = b56re_a - b56re_b;
+    let out5im = b56im_a + b56im_b;
+    let out6re = b56re_a + b56re_b;
+    let out6im = b56im_a - b56im_b;
+    let out7re = b47re_a + b47re_b;
+    let out7im = b47im_a - b47im_b;
+    let out8re = b38re_a + b38re_b;
+    let out8im = b38im_a - b38im_b;
+    let out9re = b29re_a + b29re_b;
+    let out9im = b29im_a - b29im_b;
+    let out10re = b110re_a + b110re_b;
+    let out10im = b110im_a - b110im_b;
+
+    [
+        sum,
+        Complex::new(out1re, out1im),
+        Complex::new(out2re, out2im),
+        Complex::new(out3re, out3im),
+        Complex::new(out4re, out4im),
+        Complex::new(out5re, out5im),
+        Complex::new(out6re, out6im),
+        Complex::new(out7re, out7im),
+        Complex::new(out8re, out8im),
+        Complex::new(out9re, out9im),
+        Complex::new(out10re, out10im),
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use num_complex::Complex;
@@ -478,6 +664,50 @@ mod tests {
         assert!((monarch[8].im - buf[8].im).abs() < 0.0000001);
         assert!((monarch[9].re - buf[9].re).abs() < 0.0000001);
         assert!((monarch[9].im - buf[9].im).abs() < 0.0000001);
+    }
+
+    #[test]
+    fn test_fft11() {
+        let mut p = rustfft::FftPlanner::new();
+        let plan = p.plan_fft_forward(11);
+        let mut buf = vec![
+            Complex::<f64>::new(0.0, 0.0),
+            Complex::new(1.0, 0.0),
+            Complex::new(2.0, 0.0),
+            Complex::new(3.0, 0.0),
+            Complex::new(4.0, 0.0),
+            Complex::new(5.0, 0.0),
+            Complex::new(6.0, 0.0),
+            Complex::new(7.0, 0.0),
+            Complex::new(8.0, 0.0),
+            Complex::new(9.0, 0.0),
+            Complex::new(10.0, 0.0),
+        ];
+
+        let monarch = fft11(&buf);
+        plan.process(&mut buf);
+
+        assert_eq!(monarch[0], buf[0]);
+        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
+        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
+        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
+        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
+        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
+        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
+        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
+        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
+        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
+        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
+        assert!((monarch[6].re - buf[6].re).abs() < 0.0000001);
+        assert!((monarch[6].im - buf[6].im).abs() < 0.0000001);
+        assert!((monarch[7].re - buf[7].re).abs() < 0.0000001);
+        assert!((monarch[7].im - buf[7].im).abs() < 0.0000001);
+        assert!((monarch[8].re - buf[8].re).abs() < 0.0000001);
+        assert!((monarch[8].im - buf[8].im).abs() < 0.0000001);
+        assert!((monarch[9].re - buf[9].re).abs() < 0.0000001);
+        assert!((monarch[9].im - buf[9].im).abs() < 0.0000001);
+        assert!((monarch[10].re - buf[10].re).abs() < 0.0000001);
+        assert!((monarch[10].im - buf[10].im).abs() < 0.0000001);
     }
 
     #[test]
