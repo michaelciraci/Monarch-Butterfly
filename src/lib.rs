@@ -1132,6 +1132,101 @@ pub fn fft17<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
     ]
 }
 
+#[inline]
+pub fn fft18<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 18] {
+    let n = 18;
+    let x = input.as_ref();
+    assert_eq!(n, x.len());
+
+    let twiddles = [
+        Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap()),
+        Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap()),
+        Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap()),
+        Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap()),
+        Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap()),
+        Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap()),
+        Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap()),
+        Complex::new(
+            T::from(0.93969262078590842).unwrap(),
+            T::from(-0.34202014332566871).unwrap(),
+        ),
+        Complex::new(
+            T::from(0.76604444311897801).unwrap(),
+            T::from(-0.64278760968653925).unwrap(),
+        ),
+        Complex::new(T::from(0.5).unwrap(), T::from(-0.8660254037844386).unwrap()),
+        Complex::new(
+            T::from(0.17364817766693041).unwrap(),
+            T::from(-0.98480775301220802).unwrap(),
+        ),
+        Complex::new(
+            T::from(-0.1736481776669303).unwrap(),
+            T::from(-0.98480775301220802).unwrap(),
+        ),
+        Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap()),
+        Complex::new(
+            T::from(0.76604444311897801).unwrap(),
+            T::from(-0.64278760968653925).unwrap(),
+        ),
+        Complex::new(
+            T::from(0.17364817766693041).unwrap(),
+            T::from(-0.98480775301220802).unwrap(),
+        ),
+        Complex::new(
+            T::from(-0.5).unwrap(),
+            T::from(-0.86602540378443881).unwrap(),
+        ),
+        Complex::new(
+            T::from(-0.93969262078590832).unwrap(),
+            T::from(-0.34202014332566888).unwrap(),
+        ),
+        Complex::new(
+            T::from(-0.93969262078590842).unwrap(),
+            T::from(0.34202014332566866).unwrap(),
+        ),
+    ];
+
+    let row0 = fft6([x[0], x[3], x[6], x[9], x[12], x[15]]);
+    let row1 = fft6([x[1], x[4], x[7], x[10], x[13], x[16]]);
+    let row2 = fft6([x[2], x[5], x[8], x[11], x[14], x[17]]);
+
+    let col0 = fft3([
+        row0[0] * twiddles[0],
+        row1[0] * twiddles[6],
+        row2[0] * twiddles[12],
+    ]);
+    let col1 = fft3([
+        row0[1] * twiddles[1],
+        row1[1] * twiddles[7],
+        row2[1] * twiddles[13],
+    ]);
+    let col2 = fft3([
+        row0[2] * twiddles[2],
+        row1[2] * twiddles[8],
+        row2[2] * twiddles[14],
+    ]);
+    let col3 = fft3([
+        row0[3] * twiddles[3],
+        row1[3] * twiddles[9],
+        row2[3] * twiddles[15],
+    ]);
+    let col4 = fft3([
+        row0[4] * twiddles[4],
+        row1[4] * twiddles[10],
+        row2[4] * twiddles[16],
+    ]);
+    let col5 = fft3([
+        row0[5] * twiddles[5],
+        row1[5] * twiddles[11],
+        row2[5] * twiddles[17],
+    ]);
+
+    [
+        col0[0], col1[0], col2[0], col3[0], col4[0], col5[0], col0[1], col1[1], col2[1], col3[1],
+        col4[1], col5[1], col0[2], col1[2], col2[2], col3[2], col4[2], col5[2],
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use num_complex::Complex;
@@ -1384,6 +1479,21 @@ mod tests {
         let monarch = fft17(&buf);
         plan.process(&mut buf);
 
+        assert_slice_equal!(monarch, buf);
+    }
+
+    #[test]
+    fn test_fft18() {
+        let mut p = rustfft::FftPlanner::new();
+        let plan = p.plan_fft_forward(18);
+        let mut buf: Vec<_> = (0..18)
+            .map(|i| Complex::<f64>::new(i as f64, 0.0))
+            .collect();
+
+        let monarch = fft18(&buf);
+        plan.process(&mut buf);
+
+        dbg!(&buf);
         assert_slice_equal!(monarch, buf);
     }
 
