@@ -726,6 +726,28 @@ pub fn fft14<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
     ]
 }
 
+#[inline]
+pub fn fft15<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 15] {
+    let n = 15;
+    let x = input.as_ref();
+    assert_eq!(n, x.len());
+
+    let row0 = fft3([x[0], x[5], x[10]]);
+    let row1 = fft3([x[3], x[8], x[13]]);
+    let row2 = fft3([x[6], x[11], x[1]]);
+    let row3 = fft3([x[9], x[14], x[4]]);
+    let row4 = fft3([x[12], x[2], x[7]]);
+
+    let col0 = fft5([row0[0], row1[0], row2[0], row3[0], row4[0]]);
+    let col1 = fft5([row0[1], row1[1], row2[1], row3[1], row4[1]]);
+    let col2 = fft5([row0[2], row1[2], row2[2], row3[2], row4[2]]);
+
+    [
+        col0[0], col1[1], col2[2], col0[3], col1[4], col2[0], col0[1], col1[2], col2[3], col0[4],
+        col1[0], col2[1], col0[2], col1[3], col2[4],
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use num_complex::Complex;
@@ -831,13 +853,7 @@ mod tests {
     fn test_fft5() {
         let mut p = rustfft::FftPlanner::new();
         let plan = p.plan_fft_forward(5);
-        let mut buf = vec![
-            Complex::<f64>::new(0.0, 0.0),
-            Complex::new(1.0, 0.0),
-            Complex::new(2.0, 0.0),
-            Complex::new(3.0, 0.0),
-            Complex::new(4.0, 0.0),
-        ];
+        let mut buf: Vec<_> = (0..5).map(|i| Complex::<f64>::new(i as f64, 0.0)).collect();
 
         let monarch = fft5(&buf);
 
@@ -850,14 +866,7 @@ mod tests {
     fn test_fft6() {
         let mut p = rustfft::FftPlanner::new();
         let plan = p.plan_fft_forward(6);
-        let mut buf = vec![
-            Complex::<f64>::new(0.0, 0.0),
-            Complex::new(1.0, 0.0),
-            Complex::new(2.0, 0.0),
-            Complex::new(3.0, 0.0),
-            Complex::new(4.0, 0.0),
-            Complex::new(5.0, 0.0),
-        ];
+        let mut buf: Vec<_> = (0..6).map(|i| Complex::<f64>::new(i as f64, 0.0)).collect();
 
         let monarch = fft6(&buf);
         plan.process(&mut buf);
@@ -869,15 +878,7 @@ mod tests {
     fn test_fft7() {
         let mut p = rustfft::FftPlanner::new();
         let plan = p.plan_fft_forward(7);
-        let mut buf = vec![
-            Complex::<f64>::new(0.0, 0.0),
-            Complex::new(1.0, 0.0),
-            Complex::new(2.0, 0.0),
-            Complex::new(3.0, 0.0),
-            Complex::new(4.0, 0.0),
-            Complex::new(5.0, 0.0),
-            Complex::new(6.0, 0.0),
-        ];
+        let mut buf: Vec<_> = (0..7).map(|i| Complex::<f64>::new(i as f64, 0.0)).collect();
 
         let monarch = fft7(&buf);
         plan.process(&mut buf);
@@ -896,17 +897,7 @@ mod tests {
     fn test_fft9() {
         let mut p = rustfft::FftPlanner::new();
         let plan = p.plan_fft_forward(9);
-        let mut buf = vec![
-            Complex::<f64>::new(0.0, 0.0),
-            Complex::new(1.0, 0.0),
-            Complex::new(2.0, 0.0),
-            Complex::new(3.0, 0.0),
-            Complex::new(4.0, 0.0),
-            Complex::new(5.0, 0.0),
-            Complex::new(6.0, 0.0),
-            Complex::new(7.0, 0.0),
-            Complex::new(8.0, 0.0),
-        ];
+        let mut buf: Vec<_> = (0..9).map(|i| Complex::<f64>::new(i as f64, 0.0)).collect();
 
         let monarch = fft9(&buf);
         plan.process(&mut buf);
@@ -918,18 +909,9 @@ mod tests {
     fn test_fft10() {
         let mut p = rustfft::FftPlanner::new();
         let plan = p.plan_fft_forward(10);
-        let mut buf = vec![
-            Complex::<f64>::new(0.0, 0.0),
-            Complex::new(1.0, 0.0),
-            Complex::new(2.0, 0.0),
-            Complex::new(3.0, 0.0),
-            Complex::new(4.0, 0.0),
-            Complex::new(5.0, 0.0),
-            Complex::new(6.0, 0.0),
-            Complex::new(7.0, 0.0),
-            Complex::new(8.0, 0.0),
-            Complex::new(9.0, 0.0),
-        ];
+        let mut buf: Vec<_> = (0..10)
+            .map(|i| Complex::<f64>::new(i as f64, 0.0))
+            .collect();
 
         let monarch = fft10(&buf);
         plan.process(&mut buf);
@@ -941,19 +923,9 @@ mod tests {
     fn test_fft11() {
         let mut p = rustfft::FftPlanner::new();
         let plan = p.plan_fft_forward(11);
-        let mut buf = vec![
-            Complex::<f64>::new(0.0, 0.0),
-            Complex::new(1.0, 0.0),
-            Complex::new(2.0, 0.0),
-            Complex::new(3.0, 0.0),
-            Complex::new(4.0, 0.0),
-            Complex::new(5.0, 0.0),
-            Complex::new(6.0, 0.0),
-            Complex::new(7.0, 0.0),
-            Complex::new(8.0, 0.0),
-            Complex::new(9.0, 0.0),
-            Complex::new(10.0, 0.0),
-        ];
+        let mut buf: Vec<_> = (0..11)
+            .map(|i| Complex::<f64>::new(i as f64, 0.0))
+            .collect();
 
         let monarch = fft11(&buf);
         plan.process(&mut buf);
@@ -965,20 +937,9 @@ mod tests {
     fn test_fft12() {
         let mut p = rustfft::FftPlanner::new();
         let plan = p.plan_fft_forward(12);
-        let mut buf = vec![
-            Complex::<f64>::new(0.0, 0.0),
-            Complex::new(1.0, 0.0),
-            Complex::new(2.0, 0.0),
-            Complex::new(3.0, 0.0),
-            Complex::new(4.0, 0.0),
-            Complex::new(5.0, 0.0),
-            Complex::new(6.0, 0.0),
-            Complex::new(7.0, 0.0),
-            Complex::new(8.0, 0.0),
-            Complex::new(9.0, 0.0),
-            Complex::new(10.0, 0.0),
-            Complex::new(11.0, 0.0),
-        ];
+        let mut buf: Vec<_> = (0..12)
+            .map(|i| Complex::<f64>::new(i as f64, 0.0))
+            .collect();
 
         let monarch = fft12(&buf);
         plan.process(&mut buf);
@@ -990,23 +951,39 @@ mod tests {
     fn test_fft13() {
         let mut p = rustfft::FftPlanner::new();
         let plan = p.plan_fft_forward(13);
-        let mut buf = vec![
-            Complex::<f64>::new(0.0, 0.0),
-            Complex::new(1.0, 0.0),
-            Complex::new(2.0, 0.0),
-            Complex::new(3.0, 0.0),
-            Complex::new(4.0, 0.0),
-            Complex::new(5.0, 0.0),
-            Complex::new(6.0, 0.0),
-            Complex::new(7.0, 0.0),
-            Complex::new(8.0, 0.0),
-            Complex::new(9.0, 0.0),
-            Complex::new(10.0, 0.0),
-            Complex::new(11.0, 0.0),
-            Complex::new(12.0, 0.0),
-        ];
+        let mut buf: Vec<_> = (0..13)
+            .map(|i| Complex::<f64>::new(i as f64, 0.0))
+            .collect();
 
         let monarch = fft13(&buf);
+        plan.process(&mut buf);
+
+        assert_slice_equal!(monarch, buf);
+    }
+
+    #[test]
+    fn test_fft14() {
+        let mut p = rustfft::FftPlanner::new();
+        let plan = p.plan_fft_forward(14);
+        let mut buf: Vec<_> = (0..14)
+            .map(|i| Complex::<f64>::new(i as f64, 0.0))
+            .collect();
+
+        let monarch = fft14(&buf);
+        plan.process(&mut buf);
+
+        assert_slice_equal!(monarch, buf);
+    }
+
+    #[test]
+    fn test_fft15() {
+        let mut p = rustfft::FftPlanner::new();
+        let plan = p.plan_fft_forward(15);
+        let mut buf: Vec<_> = (0..15)
+            .map(|i| Complex::<f64>::new(i as f64, 0.0))
+            .collect();
+
+        let monarch = fft15(&buf);
         plan.process(&mut buf);
 
         assert_slice_equal!(monarch, buf);
