@@ -699,11 +699,65 @@ pub fn fft13<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
     ]
 }
 
+#[inline]
+pub fn fft14<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 14] {
+    let n = 14;
+    let x = input.as_ref();
+    assert_eq!(n, x.len());
+
+    let row0 = fft2([x[0], x[7]]);
+    let row1 = fft2([x[2], x[9]]);
+    let row2 = fft2([x[4], x[11]]);
+    let row3 = fft2([x[6], x[13]]);
+    let row4 = fft2([x[8], x[1]]);
+    let row5 = fft2([x[10], x[3]]);
+    let row6 = fft2([x[12], x[5]]);
+
+    let col0 = fft7([
+        row0[0], row1[0], row2[0], row3[0], row4[0], row5[0], row6[0],
+    ]);
+    let col1 = fft7([
+        row0[1], row1[1], row2[1], row3[1], row4[1], row5[1], row6[1],
+    ]);
+
+    [
+        col0[0], col1[1], col0[2], col1[3], col0[4], col1[5], col0[6], col1[0], col0[1], col1[2],
+        col0[3], col1[4], col0[5], col1[6],
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use num_complex::Complex;
 
     use crate::*;
+
+    macro_rules! assert_slice_equal {
+        ($lhs:expr,$rhs:expr) => {
+            assert_slice_equal!($lhs, $rhs, 0.0001);
+        };
+        ($lhs:expr,$rhs:expr,$tol:expr) => {
+            assert_eq!($lhs.len(), $rhs.len());
+            for idx in 0..($lhs.len()) {
+                assert!(
+                    ($lhs[idx].re - $rhs[idx].re).abs() < $tol,
+                    "index {} does not match: ({} - {}).abs() < {}",
+                    idx,
+                    $lhs[idx].re,
+                    $rhs[idx].re,
+                    $tol
+                );
+                assert!(
+                    ($lhs[idx].im - $rhs[idx].im).abs() < $tol,
+                    "index {} does not match: ({} - {}).abs() < {}",
+                    idx,
+                    $lhs[idx].im,
+                    $rhs[idx].im,
+                    $tol
+                );
+            }
+        };
+    }
 
     fn butterfly(x: Vec<Complex<f32>>) -> Vec<Complex<f32>> {
         let n = x.len();
@@ -728,6 +782,7 @@ mod tests {
             .concat()
         }
     }
+
     #[test]
     fn test_butterfly_2() {
         assert_eq!(
@@ -750,11 +805,7 @@ mod tests {
 
         plan.process(&mut buf);
 
-        assert_eq!(monarch[0], buf[0]);
-        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
-        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
-        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
-        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
+        assert_slice_equal!(monarch, buf);
     }
 
     #[test]
@@ -792,15 +843,7 @@ mod tests {
 
         plan.process(&mut buf);
 
-        assert_eq!(monarch[0], buf[0]);
-        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
-        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
-        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
-        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
-        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
-        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
-        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
-        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
+        assert_slice_equal!(monarch, buf);
     }
 
     #[test]
@@ -819,17 +862,7 @@ mod tests {
         let monarch = fft6(&buf);
         plan.process(&mut buf);
 
-        assert_eq!(monarch[0], buf[0]);
-        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
-        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
-        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
-        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
-        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
-        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
-        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
-        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
-        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
-        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
+        assert_slice_equal!(monarch, buf);
     }
 
     #[test]
@@ -849,19 +882,7 @@ mod tests {
         let monarch = fft7(&buf);
         plan.process(&mut buf);
 
-        assert_eq!(monarch[0], buf[0]);
-        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
-        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
-        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
-        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
-        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
-        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
-        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
-        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
-        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
-        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
-        assert!((monarch[6].re - buf[6].re).abs() < 0.0000001);
-        assert!((monarch[6].im - buf[6].im).abs() < 0.0000001);
+        assert_slice_equal!(monarch, buf);
     }
 
     #[test]
@@ -890,23 +911,7 @@ mod tests {
         let monarch = fft9(&buf);
         plan.process(&mut buf);
 
-        assert_eq!(monarch[0], buf[0]);
-        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
-        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
-        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
-        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
-        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
-        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
-        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
-        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
-        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
-        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
-        assert!((monarch[6].re - buf[6].re).abs() < 0.0000001);
-        assert!((monarch[6].im - buf[6].im).abs() < 0.0000001);
-        assert!((monarch[7].re - buf[7].re).abs() < 0.0000001);
-        assert!((monarch[7].im - buf[7].im).abs() < 0.0000001);
-        assert!((monarch[8].re - buf[8].re).abs() < 0.0000001);
-        assert!((monarch[8].im - buf[8].im).abs() < 0.0000001);
+        assert_slice_equal!(monarch, buf);
     }
 
     #[test]
@@ -929,25 +934,7 @@ mod tests {
         let monarch = fft10(&buf);
         plan.process(&mut buf);
 
-        assert_eq!(monarch[0], buf[0]);
-        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
-        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
-        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
-        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
-        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
-        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
-        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
-        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
-        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
-        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
-        assert!((monarch[6].re - buf[6].re).abs() < 0.0000001);
-        assert!((monarch[6].im - buf[6].im).abs() < 0.0000001);
-        assert!((monarch[7].re - buf[7].re).abs() < 0.0000001);
-        assert!((monarch[7].im - buf[7].im).abs() < 0.0000001);
-        assert!((monarch[8].re - buf[8].re).abs() < 0.0000001);
-        assert!((monarch[8].im - buf[8].im).abs() < 0.0000001);
-        assert!((monarch[9].re - buf[9].re).abs() < 0.0000001);
-        assert!((monarch[9].im - buf[9].im).abs() < 0.0000001);
+        assert_slice_equal!(monarch, buf);
     }
 
     #[test]
@@ -971,27 +958,7 @@ mod tests {
         let monarch = fft11(&buf);
         plan.process(&mut buf);
 
-        assert_eq!(monarch[0], buf[0]);
-        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
-        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
-        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
-        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
-        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
-        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
-        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
-        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
-        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
-        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
-        assert!((monarch[6].re - buf[6].re).abs() < 0.0000001);
-        assert!((monarch[6].im - buf[6].im).abs() < 0.0000001);
-        assert!((monarch[7].re - buf[7].re).abs() < 0.0000001);
-        assert!((monarch[7].im - buf[7].im).abs() < 0.0000001);
-        assert!((monarch[8].re - buf[8].re).abs() < 0.0000001);
-        assert!((monarch[8].im - buf[8].im).abs() < 0.0000001);
-        assert!((monarch[9].re - buf[9].re).abs() < 0.0000001);
-        assert!((monarch[9].im - buf[9].im).abs() < 0.0000001);
-        assert!((monarch[10].re - buf[10].re).abs() < 0.0000001);
-        assert!((monarch[10].im - buf[10].im).abs() < 0.0000001);
+        assert_slice_equal!(monarch, buf);
     }
 
     #[test]
@@ -1016,29 +983,7 @@ mod tests {
         let monarch = fft12(&buf);
         plan.process(&mut buf);
 
-        assert_eq!(monarch[0], buf[0]);
-        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
-        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
-        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
-        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
-        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
-        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
-        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
-        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
-        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
-        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
-        assert!((monarch[6].re - buf[6].re).abs() < 0.0000001);
-        assert!((monarch[6].im - buf[6].im).abs() < 0.0000001);
-        assert!((monarch[7].re - buf[7].re).abs() < 0.0000001);
-        assert!((monarch[7].im - buf[7].im).abs() < 0.0000001);
-        assert!((monarch[8].re - buf[8].re).abs() < 0.0000001);
-        assert!((monarch[8].im - buf[8].im).abs() < 0.0000001);
-        assert!((monarch[9].re - buf[9].re).abs() < 0.0000001);
-        assert!((monarch[9].im - buf[9].im).abs() < 0.0000001);
-        assert!((monarch[10].re - buf[10].re).abs() < 0.0000001);
-        assert!((monarch[10].im - buf[10].im).abs() < 0.0000001);
-        assert!((monarch[11].re - buf[11].re).abs() < 0.0000001);
-        assert!((monarch[11].im - buf[11].im).abs() < 0.0000001);
+        assert_slice_equal!(monarch, buf);
     }
 
     #[test]
@@ -1064,47 +1009,23 @@ mod tests {
         let monarch = fft13(&buf);
         plan.process(&mut buf);
 
-        assert_eq!(monarch[0], buf[0]);
-        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
-        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
-        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
-        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
-        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
-        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
-        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
-        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
-        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
-        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
-        assert!((monarch[6].re - buf[6].re).abs() < 0.0000001);
-        assert!((monarch[6].im - buf[6].im).abs() < 0.0000001);
-        assert!((monarch[7].re - buf[7].re).abs() < 0.0000001);
-        assert!((monarch[7].im - buf[7].im).abs() < 0.0000001);
-        assert!((monarch[8].re - buf[8].re).abs() < 0.0000001);
-        assert!((monarch[8].im - buf[8].im).abs() < 0.0000001);
-        assert!((monarch[9].re - buf[9].re).abs() < 0.0000001);
-        assert!((monarch[9].im - buf[9].im).abs() < 0.0000001);
-        assert!((monarch[10].re - buf[10].re).abs() < 0.0000001);
-        assert!((monarch[10].im - buf[10].im).abs() < 0.0000001);
-        assert!((monarch[11].re - buf[11].re).abs() < 0.0000001);
-        assert!((monarch[11].im - buf[11].im).abs() < 0.0000001);
-        assert!((monarch[12].re - buf[12].re).abs() < 0.0000001);
-        assert!((monarch[12].im - buf[12].im).abs() < 0.0000001);
+        assert_slice_equal!(monarch, buf);
     }
 
-    // #[test]
-    // fn test_butterfly_1024() {
-    //     let v: Vec<_> = (0..1024)
-    //         .map(|i: i32| Complex::new(i as f32, i as f32))
-    //         .collect();
-    //     let a: [Complex<f32>; 1024] = (0..1024)
-    //         .map(|i| Complex::new(i as f32, i as f32))
-    //         .collect::<Vec<_>>()
-    //         .try_into()
-    //         .unwrap();
+    #[test]
+    fn test_butterfly_1024() {
+        let v: Vec<_> = (0..1024)
+            .map(|i: i32| Complex::new(i as f32, i as f32))
+            .collect();
+        let a: [Complex<f32>; 1024] = (0..1024)
+            .map(|i| Complex::new(i as f32, i as f32))
+            .collect::<Vec<_>>()
+            .try_into()
+            .unwrap();
 
-    //     let ba = fft1024(a);
-    //     let bv = butterfly(v);
+        let ba = fft1024(a);
+        let bv = butterfly(v);
 
-    //     assert_eq!(&ba, &*bv);
-    // }
+        assert_slice_equal!(ba, bv, 0.001);
+    }
 }
