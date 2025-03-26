@@ -434,6 +434,271 @@ pub fn fft11<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
     ]
 }
 
+#[inline]
+pub fn fft12<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 12] {
+    let n = 12;
+    let x = input.as_ref();
+    assert_eq!(n, x.len());
+
+    let column0 = fft4([x[0], x[3], x[6], x[9]]);
+    let column1 = fft4([x[4], x[7], x[10], x[1]]);
+    let column2 = fft4([x[8], x[11], x[2], x[5]]);
+
+    let row0 = fft3([column0[0], column1[0], column2[0]]);
+    let row1 = fft3([column0[1], column1[1], column2[1]]);
+    let row2 = fft3([column0[2], column1[2], column2[2]]);
+    let row3 = fft3([column0[3], column1[3], column2[3]]);
+
+    [
+        row0[0], row1[1], row2[2], row3[0], row0[1], row1[2], row2[0], row3[1], row0[2], row1[0],
+        row2[1], row3[2],
+    ]
+}
+
+#[inline]
+pub fn fft13<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 13] {
+    let n = 13;
+    let x = input.as_ref();
+    assert_eq!(n, x.len());
+
+    let twiddle1: Complex<T> = Complex::new(
+        T::from(0.88545602565320991).unwrap(),
+        T::from(-0.46472317204376851).unwrap(),
+    );
+    let twiddle2: Complex<T> = Complex::new(
+        T::from(0.56806474673115592).unwrap(),
+        T::from(-0.82298386589365635).unwrap(),
+    );
+    let twiddle3: Complex<T> = Complex::new(
+        T::from(0.12053668025532323).unwrap(),
+        T::from(-0.99270887409805397).unwrap(),
+    );
+    let twiddle4: Complex<T> = Complex::new(
+        T::from(-0.35460488704253545).unwrap(),
+        T::from(-0.93501624268541483).unwrap(),
+    );
+    let twiddle5: Complex<T> = Complex::new(
+        T::from(-0.74851074817110086).unwrap(),
+        T::from(-0.66312265824079553).unwrap(),
+    );
+    let twiddle6: Complex<T> = Complex::new(
+        T::from(-0.9709418174260519).unwrap(),
+        T::from(-0.2393156642875581).unwrap(),
+    );
+
+    let x112p = x[1] + x[12];
+    let x112n = x[1] - x[12];
+    let x211p = x[2] + x[11];
+    let x211n = x[2] - x[11];
+    let x310p = x[3] + x[10];
+    let x310n = x[3] - x[10];
+    let x49p = x[4] + x[9];
+    let x49n = x[4] - x[9];
+    let x58p = x[5] + x[8];
+    let x58n = x[5] - x[8];
+    let x67p = x[6] + x[7];
+    let x67n = x[6] - x[7];
+    let sum = x[0] + x112p + x211p + x310p + x49p + x58p + x67p;
+    let b112re_a = x[0].re
+        + twiddle1.re * x112p.re
+        + twiddle2.re * x211p.re
+        + twiddle3.re * x310p.re
+        + twiddle4.re * x49p.re
+        + twiddle5.re * x58p.re
+        + twiddle6.re * x67p.re;
+    let b112re_b = twiddle1.im * x112n.im
+        + twiddle2.im * x211n.im
+        + twiddle3.im * x310n.im
+        + twiddle4.im * x49n.im
+        + twiddle5.im * x58n.im
+        + twiddle6.im * x67n.im;
+    let b211re_a = x[0].re
+        + twiddle2.re * x112p.re
+        + twiddle4.re * x211p.re
+        + twiddle6.re * x310p.re
+        + twiddle5.re * x49p.re
+        + twiddle3.re * x58p.re
+        + twiddle1.re * x67p.re;
+    let b211re_b = twiddle2.im * x112n.im
+        + twiddle4.im * x211n.im
+        + twiddle6.im * x310n.im
+        + -twiddle5.im * x49n.im
+        + -twiddle3.im * x58n.im
+        + -twiddle1.im * x67n.im;
+    let b310re_a = x[0].re
+        + twiddle3.re * x112p.re
+        + twiddle6.re * x211p.re
+        + twiddle4.re * x310p.re
+        + twiddle1.re * x49p.re
+        + twiddle2.re * x58p.re
+        + twiddle5.re * x67p.re;
+    let b310re_b = twiddle3.im * x112n.im
+        + twiddle6.im * x211n.im
+        + -twiddle4.im * x310n.im
+        + -twiddle1.im * x49n.im
+        + twiddle2.im * x58n.im
+        + twiddle5.im * x67n.im;
+    let b49re_a = x[0].re
+        + twiddle4.re * x112p.re
+        + twiddle5.re * x211p.re
+        + twiddle1.re * x310p.re
+        + twiddle3.re * x49p.re
+        + twiddle6.re * x58p.re
+        + twiddle2.re * x67p.re;
+    let b49re_b = twiddle4.im * x112n.im
+        + -twiddle5.im * x211n.im
+        + -twiddle1.im * x310n.im
+        + twiddle3.im * x49n.im
+        + -twiddle6.im * x58n.im
+        + -twiddle2.im * x67n.im;
+    let b58re_a = x[0].re
+        + twiddle5.re * x112p.re
+        + twiddle3.re * x211p.re
+        + twiddle2.re * x310p.re
+        + twiddle6.re * x49p.re
+        + twiddle1.re * x58p.re
+        + twiddle4.re * x67p.re;
+    let b58re_b = twiddle5.im * x112n.im
+        + -twiddle3.im * x211n.im
+        + twiddle2.im * x310n.im
+        + -twiddle6.im * x49n.im
+        + -twiddle1.im * x58n.im
+        + twiddle4.im * x67n.im;
+    let b67re_a = x[0].re
+        + twiddle6.re * x112p.re
+        + twiddle1.re * x211p.re
+        + twiddle5.re * x310p.re
+        + twiddle2.re * x49p.re
+        + twiddle4.re * x58p.re
+        + twiddle3.re * x67p.re;
+    let b67re_b = twiddle6.im * x112n.im
+        + -twiddle1.im * x211n.im
+        + twiddle5.im * x310n.im
+        + -twiddle2.im * x49n.im
+        + twiddle4.im * x58n.im
+        + -twiddle3.im * x67n.im;
+
+    let b112im_a = x[0].im
+        + twiddle1.re * x112p.im
+        + twiddle2.re * x211p.im
+        + twiddle3.re * x310p.im
+        + twiddle4.re * x49p.im
+        + twiddle5.re * x58p.im
+        + twiddle6.re * x67p.im;
+    let b112im_b = twiddle1.im * x112n.re
+        + twiddle2.im * x211n.re
+        + twiddle3.im * x310n.re
+        + twiddle4.im * x49n.re
+        + twiddle5.im * x58n.re
+        + twiddle6.im * x67n.re;
+    let b211im_a = x[0].im
+        + twiddle2.re * x112p.im
+        + twiddle4.re * x211p.im
+        + twiddle6.re * x310p.im
+        + twiddle5.re * x49p.im
+        + twiddle3.re * x58p.im
+        + twiddle1.re * x67p.im;
+    let b211im_b = twiddle2.im * x112n.re
+        + twiddle4.im * x211n.re
+        + twiddle6.im * x310n.re
+        + -twiddle5.im * x49n.re
+        + -twiddle3.im * x58n.re
+        + -twiddle1.im * x67n.re;
+    let b310im_a = x[0].im
+        + twiddle3.re * x112p.im
+        + twiddle6.re * x211p.im
+        + twiddle4.re * x310p.im
+        + twiddle1.re * x49p.im
+        + twiddle2.re * x58p.im
+        + twiddle5.re * x67p.im;
+    let b310im_b = twiddle3.im * x112n.re
+        + twiddle6.im * x211n.re
+        + -twiddle4.im * x310n.re
+        + -twiddle1.im * x49n.re
+        + twiddle2.im * x58n.re
+        + twiddle5.im * x67n.re;
+    let b49im_a = x[0].im
+        + twiddle4.re * x112p.im
+        + twiddle5.re * x211p.im
+        + twiddle1.re * x310p.im
+        + twiddle3.re * x49p.im
+        + twiddle6.re * x58p.im
+        + twiddle2.re * x67p.im;
+    let b49im_b = twiddle4.im * x112n.re
+        + -twiddle5.im * x211n.re
+        + -twiddle1.im * x310n.re
+        + twiddle3.im * x49n.re
+        + -twiddle6.im * x58n.re
+        + -twiddle2.im * x67n.re;
+    let b58im_a = x[0].im
+        + twiddle5.re * x112p.im
+        + twiddle3.re * x211p.im
+        + twiddle2.re * x310p.im
+        + twiddle6.re * x49p.im
+        + twiddle1.re * x58p.im
+        + twiddle4.re * x67p.im;
+    let b58im_b = twiddle5.im * x112n.re
+        + -twiddle3.im * x211n.re
+        + twiddle2.im * x310n.re
+        + -twiddle6.im * x49n.re
+        + -twiddle1.im * x58n.re
+        + twiddle4.im * x67n.re;
+    let b67im_a = x[0].im
+        + twiddle6.re * x112p.im
+        + twiddle1.re * x211p.im
+        + twiddle5.re * x310p.im
+        + twiddle2.re * x49p.im
+        + twiddle4.re * x58p.im
+        + twiddle3.re * x67p.im;
+    let b67im_b = twiddle6.im * x112n.re
+        + -twiddle1.im * x211n.re
+        + twiddle5.im * x310n.re
+        + -twiddle2.im * x49n.re
+        + twiddle4.im * x58n.re
+        + -twiddle3.im * x67n.re;
+
+    let out1re = b112re_a - b112re_b;
+    let out1im = b112im_a + b112im_b;
+    let out2re = b211re_a - b211re_b;
+    let out2im = b211im_a + b211im_b;
+    let out3re = b310re_a - b310re_b;
+    let out3im = b310im_a + b310im_b;
+    let out4re = b49re_a - b49re_b;
+    let out4im = b49im_a + b49im_b;
+    let out5re = b58re_a - b58re_b;
+    let out5im = b58im_a + b58im_b;
+    let out6re = b67re_a - b67re_b;
+    let out6im = b67im_a + b67im_b;
+    let out7re = b67re_a + b67re_b;
+    let out7im = b67im_a - b67im_b;
+    let out8re = b58re_a + b58re_b;
+    let out8im = b58im_a - b58im_b;
+    let out9re = b49re_a + b49re_b;
+    let out9im = b49im_a - b49im_b;
+    let out10re = b310re_a + b310re_b;
+    let out10im = b310im_a - b310im_b;
+    let out11re = b211re_a + b211re_b;
+    let out11im = b211im_a - b211im_b;
+    let out12re = b112re_a + b112re_b;
+    let out12im = b112im_a - b112im_b;
+
+    [
+        sum,
+        Complex::new(out1re, out1im),
+        Complex::new(out2re, out2im),
+        Complex::new(out3re, out3im),
+        Complex::new(out4re, out4im),
+        Complex::new(out5re, out5im),
+        Complex::new(out6re, out6im),
+        Complex::new(out7re, out7im),
+        Complex::new(out8re, out8im),
+        Complex::new(out9re, out9im),
+        Complex::new(out10re, out10im),
+        Complex::new(out11re, out11im),
+        Complex::new(out12re, out12im),
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use num_complex::Complex;
@@ -490,6 +755,25 @@ mod tests {
         assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
         assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
         assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
+    }
+
+    #[test]
+    fn test_butterfly_4() {
+        assert_eq!(
+            fft4([
+                Complex::new(1.0, 0.0),
+                Complex::new(2.0, 0.0),
+                Complex::new(3.0, 0.0),
+                Complex::new(4.0, 0.0)
+            ])
+            .to_vec(),
+            butterfly(vec![
+                Complex::new(1.0, 0.0),
+                Complex::new(2.0, 0.0),
+                Complex::new(3.0, 0.0),
+                Complex::new(4.0, 0.0),
+            ])
+        );
     }
 
     #[test]
@@ -711,38 +995,116 @@ mod tests {
     }
 
     #[test]
-    fn test_butterfly_4() {
-        assert_eq!(
-            fft4([
-                Complex::new(1.0, 0.0),
-                Complex::new(2.0, 0.0),
-                Complex::new(3.0, 0.0),
-                Complex::new(4.0, 0.0)
-            ])
-            .to_vec(),
-            butterfly(vec![
-                Complex::new(1.0, 0.0),
-                Complex::new(2.0, 0.0),
-                Complex::new(3.0, 0.0),
-                Complex::new(4.0, 0.0),
-            ])
-        );
+    fn test_fft12() {
+        let mut p = rustfft::FftPlanner::new();
+        let plan = p.plan_fft_forward(12);
+        let mut buf = vec![
+            Complex::<f64>::new(0.0, 0.0),
+            Complex::new(1.0, 0.0),
+            Complex::new(2.0, 0.0),
+            Complex::new(3.0, 0.0),
+            Complex::new(4.0, 0.0),
+            Complex::new(5.0, 0.0),
+            Complex::new(6.0, 0.0),
+            Complex::new(7.0, 0.0),
+            Complex::new(8.0, 0.0),
+            Complex::new(9.0, 0.0),
+            Complex::new(10.0, 0.0),
+            Complex::new(11.0, 0.0),
+        ];
+
+        let monarch = fft12(&buf);
+        plan.process(&mut buf);
+
+        assert_eq!(monarch[0], buf[0]);
+        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
+        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
+        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
+        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
+        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
+        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
+        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
+        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
+        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
+        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
+        assert!((monarch[6].re - buf[6].re).abs() < 0.0000001);
+        assert!((monarch[6].im - buf[6].im).abs() < 0.0000001);
+        assert!((monarch[7].re - buf[7].re).abs() < 0.0000001);
+        assert!((monarch[7].im - buf[7].im).abs() < 0.0000001);
+        assert!((monarch[8].re - buf[8].re).abs() < 0.0000001);
+        assert!((monarch[8].im - buf[8].im).abs() < 0.0000001);
+        assert!((monarch[9].re - buf[9].re).abs() < 0.0000001);
+        assert!((monarch[9].im - buf[9].im).abs() < 0.0000001);
+        assert!((monarch[10].re - buf[10].re).abs() < 0.0000001);
+        assert!((monarch[10].im - buf[10].im).abs() < 0.0000001);
+        assert!((monarch[11].re - buf[11].re).abs() < 0.0000001);
+        assert!((monarch[11].im - buf[11].im).abs() < 0.0000001);
     }
 
     #[test]
-    fn test_butterfly_1024() {
-        let v: Vec<_> = (0..1024)
-            .map(|i: i32| Complex::new(i as f32, i as f32))
-            .collect();
-        let a: [Complex<f32>; 1024] = (0..1024)
-            .map(|i| Complex::new(i as f32, i as f32))
-            .collect::<Vec<_>>()
-            .try_into()
-            .unwrap();
+    fn test_fft13() {
+        let mut p = rustfft::FftPlanner::new();
+        let plan = p.plan_fft_forward(13);
+        let mut buf = vec![
+            Complex::<f64>::new(0.0, 0.0),
+            Complex::new(1.0, 0.0),
+            Complex::new(2.0, 0.0),
+            Complex::new(3.0, 0.0),
+            Complex::new(4.0, 0.0),
+            Complex::new(5.0, 0.0),
+            Complex::new(6.0, 0.0),
+            Complex::new(7.0, 0.0),
+            Complex::new(8.0, 0.0),
+            Complex::new(9.0, 0.0),
+            Complex::new(10.0, 0.0),
+            Complex::new(11.0, 0.0),
+            Complex::new(12.0, 0.0),
+        ];
 
-        let ba = fft1024(a);
-        let bv = butterfly(v);
+        let monarch = fft13(&buf);
+        plan.process(&mut buf);
 
-        assert_eq!(&ba, &*bv);
+        assert_eq!(monarch[0], buf[0]);
+        assert!((monarch[1].re - buf[1].re).abs() < 0.0000001);
+        assert!((monarch[1].im - buf[1].im).abs() < 0.0000001);
+        assert!((monarch[2].re - buf[2].re).abs() < 0.0000001);
+        assert!((monarch[2].im - buf[2].im).abs() < 0.0000001);
+        assert!((monarch[3].re - buf[3].re).abs() < 0.0000001);
+        assert!((monarch[3].im - buf[3].im).abs() < 0.0000001);
+        assert!((monarch[4].re - buf[4].re).abs() < 0.0000001);
+        assert!((monarch[4].im - buf[4].im).abs() < 0.0000001);
+        assert!((monarch[5].re - buf[5].re).abs() < 0.0000001);
+        assert!((monarch[5].im - buf[5].im).abs() < 0.0000001);
+        assert!((monarch[6].re - buf[6].re).abs() < 0.0000001);
+        assert!((monarch[6].im - buf[6].im).abs() < 0.0000001);
+        assert!((monarch[7].re - buf[7].re).abs() < 0.0000001);
+        assert!((monarch[7].im - buf[7].im).abs() < 0.0000001);
+        assert!((monarch[8].re - buf[8].re).abs() < 0.0000001);
+        assert!((monarch[8].im - buf[8].im).abs() < 0.0000001);
+        assert!((monarch[9].re - buf[9].re).abs() < 0.0000001);
+        assert!((monarch[9].im - buf[9].im).abs() < 0.0000001);
+        assert!((monarch[10].re - buf[10].re).abs() < 0.0000001);
+        assert!((monarch[10].im - buf[10].im).abs() < 0.0000001);
+        assert!((monarch[11].re - buf[11].re).abs() < 0.0000001);
+        assert!((monarch[11].im - buf[11].im).abs() < 0.0000001);
+        assert!((monarch[12].re - buf[12].re).abs() < 0.0000001);
+        assert!((monarch[12].im - buf[12].im).abs() < 0.0000001);
     }
+
+    // #[test]
+    // fn test_butterfly_1024() {
+    //     let v: Vec<_> = (0..1024)
+    //         .map(|i: i32| Complex::new(i as f32, i as f32))
+    //         .collect();
+    //     let a: [Complex<f32>; 1024] = (0..1024)
+    //         .map(|i| Complex::new(i as f32, i as f32))
+    //         .collect::<Vec<_>>()
+    //         .try_into()
+    //         .unwrap();
+
+    //     let ba = fft1024(a);
+    //     let bv = butterfly(v);
+
+    //     assert_eq!(&ba, &*bv);
+    // }
 }
