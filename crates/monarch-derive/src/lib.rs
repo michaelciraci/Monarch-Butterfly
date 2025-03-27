@@ -6,7 +6,17 @@ use quote::quote;
 use syn::Ident;
 
 const SIZES: [usize; 11] = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
-const COPRIMES: [(usize, usize); 7] = [(2, 5), (4, 3), (2, 7), (3, 5), (4, 5), (3, 7), (2, 11)];
+const COPRIMES: [(usize, usize); 9] = [
+    (2, 5),
+    (4, 3),
+    (2, 7),
+    (3, 5),
+    (4, 5),
+    (3, 7),
+    (2, 11),
+    (3, 8),
+    (2, 13),
+];
 
 #[proc_macro]
 pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
