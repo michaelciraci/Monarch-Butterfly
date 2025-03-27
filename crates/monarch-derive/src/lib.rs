@@ -1,6 +1,8 @@
 //! This crate is not meant to be used on its own. This crate containsthe under the hood procedural macros to autogenerate
 //! FFTs for [monarch-butterfly](https://crates.io/crates/monarch-butterfly)
 
+use num_complex::Complex;
+use num_traits::{Float, FloatConst};
 use proc_macro::{Span, TokenStream};
 use quote::quote;
 use syn::Ident;
@@ -17,6 +19,15 @@ const COPRIMES: [(usize, usize); 9] = [
     (3, 8),
     (2, 13),
 ];
+const MIXED_RADIX: [(usize, usize); 1] = [(5, 5)];
+
+fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
+    let constant = T::from(-2.0).unwrap() * T::PI() / T::from(fft_len).unwrap();
+    // index * -2PI / fft_len
+    let angle = constant * T::from(index).unwrap();
+
+    Complex::new(angle.cos(), angle.sin())
+}
 
 #[proc_macro]
 pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
@@ -127,6 +138,87 @@ pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
         let combine = (0..s).map(|i| {
             let col = i % c1;
             let idx = i % c2;
+            let f = Ident::new(&format!("col{}", col), Span::call_site().into());
+            quote! {
+                #f[#idx],
+            }
+        });
+
+        quote! {
+            #[inline]
+            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+                let n = #s;
+                let x = input.as_ref();
+                assert_eq!(n, x.len());
+
+                #(#rows)*
+                #(#cols)*
+
+
+                [#(#combine)*]
+
+            }
+        }
+    });
+
+    let expanded = quote! {
+        #(#ss)*
+    };
+    proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro]
+pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
+    let ss = MIXED_RADIX.clone().into_iter().map(|(c1, c2)| {
+        let s = c1 * c2;
+        let func = Ident::new(&format!("fft{}", s), Span::call_site().into());
+        let func1 = Ident::new(&format!("fft{}", c1), Span::call_site().into());
+        let func2 = Ident::new(&format!("fft{}", c2), Span::call_site().into());
+
+        let rows = (0..c2).map(|i|  {
+            // let mut start = c1 * i;
+            let idx = (i..s).step_by(c1).map(|xx| {
+                let index = xx % s;
+                // start = (start + c2) % s;
+                quote! { 
+                    x[#index],  
+                }}
+            );
+            let row_call = Ident::new(&format!("row{}", i), Span::call_site().into());
+            
+            quote! {
+                let #row_call = #func1([ #(#idx)* ]);
+        }});
+
+        let mut twiddles = vec![Complex::<f64>::new(0.0, 0.0); 25];
+        for (x, twiddle_chunk) in twiddles.chunks_exact_mut(5).enumerate() {
+            for (y, twiddle_element) in twiddle_chunk.iter_mut().enumerate() {
+                *twiddle_element = _compute_twiddle(x * y, 25);
+            }
+        }
+
+        let cols = (0..c1).map(|i| {
+            let mut start_idx = i;
+            let idx = (0..c2).map(|ii| {
+                let row_call = Ident::new(&format!("row{}", ii), Span::call_site().into());
+                let re = twiddles[start_idx].re;
+                let im = twiddles[start_idx].im;
+                start_idx = (start_idx + c1) % s;
+                quote! {
+                    #row_call[#i] * Complex::new(T::from(#re).unwrap(), T::from(#im).unwrap())
+                }
+            });
+
+            let col_call = Ident::new(&format!("col{}", i), Span::call_site().into());
+
+            quote! {
+                let #col_call = #func2([ #(#idx),*]);
+            }
+        });
+
+        let combine = (0..s).map(|i| {
+            let col = i % c1;
+            let idx = i / c2;
             let f = Ident::new(&format!("col{}", col), Span::call_site().into());
             quote! {
                 #f[#idx],

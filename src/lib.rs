@@ -36,6 +36,7 @@ const SQRT_3_DIV_2: f64 = SQRT_3 / 2.0;
 
 monarch_derive::generate_powers_of_two!();
 monarch_derive::generate_coprimes!();
+monarch_derive::generate_mixed_radix!();
 
 fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
     let constant = T::from(-2.0).unwrap() * T::PI() / T::from(fft_len).unwrap();
@@ -2240,89 +2241,6 @@ pub fn fft23<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
         Complex::new(out20re, out20im),
         Complex::new(out21re, out21im),
         Complex::new(out22re, out22im),
-    ]
-}
-
-#[inline]
-pub fn fft25<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 25usize] {
-    let n = 25usize;
-    let x = input.as_ref();
-    assert_eq!(n, x.len());
-
-    let row0 = fft5([x[0usize], x[5usize], x[10usize], x[15usize], x[20usize]]);
-    let row1 = fft5([x[1], x[6], x[11], x[16], x[21]]);
-    let row2 = fft5([x[2], x[7], x[12], x[17], x[22]]);
-    let row3 = fft5([x[3], x[8], x[13], x[18], x[23]]);
-    let row4 = fft5([x[4], x[9], x[14], x[19], x[24]]);
-
-    let mut twiddles = vec![Complex::new(T::zero(), T::zero()); 25];
-    for (x, twiddle_chunk) in twiddles.chunks_exact_mut(5).enumerate() {
-        for (y, twiddle_element) in twiddle_chunk.iter_mut().enumerate() {
-            *twiddle_element = _compute_twiddle(x * y, 25);
-        }
-    }
-
-    let col0 = fft5([
-        row0[0usize] * twiddles[0],
-        row1[0usize] * twiddles[5],
-        row2[0usize] * twiddles[10],
-        row3[0usize] * twiddles[15],
-        row4[0usize] * twiddles[20],
-    ]);
-    let col1 = fft5([
-        row0[1usize] * twiddles[1],
-        row1[1usize] * twiddles[6],
-        row2[1usize] * twiddles[11],
-        row3[1usize] * twiddles[16],
-        row4[1usize] * twiddles[21],
-    ]);
-    let col2 = fft5([
-        row0[2usize] * twiddles[2],
-        row1[2usize] * twiddles[7],
-        row2[2usize] * twiddles[12],
-        row3[2usize] * twiddles[17],
-        row4[2usize] * twiddles[22],
-    ]);
-    let col3 = fft5([
-        row0[3usize] * twiddles[3],
-        row1[3usize] * twiddles[8],
-        row2[3usize] * twiddles[13],
-        row3[3usize] * twiddles[18],
-        row4[3usize] * twiddles[23],
-    ]);
-    let col4 = fft5([
-        row0[4usize] * twiddles[4],
-        row1[4usize] * twiddles[9],
-        row2[4usize] * twiddles[14],
-        row3[4usize] * twiddles[19],
-        row4[4usize] * twiddles[24],
-    ]);
-    [
-        col0[0usize],
-        col1[0usize],
-        col2[0usize],
-        col3[0usize],
-        col4[0usize],
-        col0[1usize],
-        col1[1usize],
-        col2[1usize],
-        col3[1usize],
-        col4[1usize],
-        col0[2usize],
-        col1[2usize],
-        col2[2usize],
-        col3[2usize],
-        col4[2usize],
-        col0[3usize],
-        col1[3usize],
-        col2[3usize],
-        col3[3usize],
-        col4[3usize],
-        col0[4usize],
-        col1[4usize],
-        col2[4usize],
-        col3[4usize],
-        col4[4usize],
     ]
 }
 
