@@ -6,6 +6,7 @@ use quote::quote;
 use syn::Ident;
 
 const SIZES: [usize; 11] = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+const COPRIMES: [(usize, usize); 7] = [(2, 5), (4, 3), (2, 7), (3, 5), (4, 5), (3, 7), (2, 11)];
 
 #[proc_macro]
 pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
@@ -70,6 +71,76 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
             x
         }
 
+        #(#ss)*
+    };
+    proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro]
+pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
+    let ss = COPRIMES.clone().into_iter().map(|(c1, c2)| {
+        let s = c1 * c2;
+        let func = Ident::new(&format!("fft{}", s), Span::call_site().into());
+        let func1 = Ident::new(&format!("fft{}", c1), Span::call_site().into());
+        let func2 = Ident::new(&format!("fft{}", c2), Span::call_site().into());
+
+        let rows = (0..c2).map(|i|  {
+            let mut start = c1 * i;
+            let idx = (0..c1).map(|_| {
+                let index = start;
+                start = (start + c2) % s;
+                quote! { 
+                    x[#index],  
+                }}
+            );
+            let row_call = Ident::new(&format!("row{}", i), Span::call_site().into());
+            
+            quote! {
+                let #row_call = #func1([ #(#idx)* ]);
+        }});
+
+        let cols = (0..c1).map(|i| {
+            let idx = (0..c2).map(|ii| {
+                let row_call = Ident::new(&format!("row{}", ii), Span::call_site().into());
+                quote! {
+                    #row_call[#i]
+                }
+            });
+
+            let col_call = Ident::new(&format!("col{}", i), Span::call_site().into());
+
+            quote! {
+                let #col_call = #func2([ #(#idx),*]);
+            }
+        });
+
+        let combine = (0..s).map(|i| {
+            let col = i % c1;
+            let idx = i % c2;
+            let f = Ident::new(&format!("col{}", col), Span::call_site().into());
+            quote! {
+                #f[#idx],
+            }
+        });
+
+        quote! {
+            #[inline]
+            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+                let n = #s;
+                let x = input.as_ref();
+                assert_eq!(n, x.len());
+
+                #(#rows)*
+                #(#cols)*
+
+
+                [#(#combine)*]
+
+            }
+        }
+    });
+
+    let expanded = quote! {
         #(#ss)*
     };
     proc_macro::TokenStream::from(expanded)

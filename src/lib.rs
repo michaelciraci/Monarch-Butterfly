@@ -35,6 +35,7 @@ const SQRT_3: f64 = 1.7320508075688772;
 const SQRT_3_DIV_2: f64 = SQRT_3 / 2.0;
 
 monarch_derive::generate_powers_of_two!();
+monarch_derive::generate_coprimes!();
 
 fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
     let constant = T::from(-2.0).unwrap() * T::PI() / T::from(fft_len).unwrap();
@@ -229,26 +230,6 @@ pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex
 }
 
 #[inline]
-pub fn fft10<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 10] {
-    let n = 10;
-    let x = input.as_ref();
-    assert_eq!(n, x.len());
-
-    let row0 = fft2([x[0], x[5]]);
-    let row1 = fft2([x[2], x[7]]);
-    let row2 = fft2([x[4], x[9]]);
-    let row3 = fft2([x[6], x[1]]);
-    let row4 = fft2([x[8], x[3]]);
-
-    let col0 = fft5([row0[0], row1[0], row2[0], row3[0], row4[0]]);
-    let col1 = fft5([row0[1], row1[1], row2[1], row3[1], row4[1]]);
-
-    [
-        col0[0], col1[1], col0[2], col1[3], col0[4], col1[0], col0[1], col1[2], col0[3], col1[4],
-    ]
-}
-
-#[inline]
 pub fn fft11<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 11] {
     let n = 11;
     let x = input.as_ref();
@@ -431,27 +412,6 @@ pub fn fft11<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
         Complex::new(out8re, out8im),
         Complex::new(out9re, out9im),
         Complex::new(out10re, out10im),
-    ]
-}
-
-#[inline]
-pub fn fft12<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 12] {
-    let n = 12;
-    let x = input.as_ref();
-    assert_eq!(n, x.len());
-
-    let column0 = fft4([x[0], x[3], x[6], x[9]]);
-    let column1 = fft4([x[4], x[7], x[10], x[1]]);
-    let column2 = fft4([x[8], x[11], x[2], x[5]]);
-
-    let row0 = fft3([column0[0], column1[0], column2[0]]);
-    let row1 = fft3([column0[1], column1[1], column2[1]]);
-    let row2 = fft3([column0[2], column1[2], column2[2]]);
-    let row3 = fft3([column0[3], column1[3], column2[3]]);
-
-    [
-        row0[0], row1[1], row2[2], row3[0], row0[1], row1[2], row2[0], row3[1], row0[2], row1[0],
-        row2[1], row3[2],
     ]
 }
 
@@ -696,55 +656,6 @@ pub fn fft13<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
         Complex::new(out10re, out10im),
         Complex::new(out11re, out11im),
         Complex::new(out12re, out12im),
-    ]
-}
-
-#[inline]
-pub fn fft14<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 14] {
-    let n = 14;
-    let x = input.as_ref();
-    assert_eq!(n, x.len());
-
-    let row0 = fft2([x[0], x[7]]);
-    let row1 = fft2([x[2], x[9]]);
-    let row2 = fft2([x[4], x[11]]);
-    let row3 = fft2([x[6], x[13]]);
-    let row4 = fft2([x[8], x[1]]);
-    let row5 = fft2([x[10], x[3]]);
-    let row6 = fft2([x[12], x[5]]);
-
-    let col0 = fft7([
-        row0[0], row1[0], row2[0], row3[0], row4[0], row5[0], row6[0],
-    ]);
-    let col1 = fft7([
-        row0[1], row1[1], row2[1], row3[1], row4[1], row5[1], row6[1],
-    ]);
-
-    [
-        col0[0], col1[1], col0[2], col1[3], col0[4], col1[5], col0[6], col1[0], col0[1], col1[2],
-        col0[3], col1[4], col0[5], col1[6],
-    ]
-}
-
-#[inline]
-pub fn fft15<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 15] {
-    let n = 15;
-    let x = input.as_ref();
-    assert_eq!(n, x.len());
-
-    let row0 = fft3([x[0], x[5], x[10]]);
-    let row1 = fft3([x[3], x[8], x[13]]);
-    let row2 = fft3([x[6], x[11], x[1]]);
-    let row3 = fft3([x[9], x[14], x[4]]);
-    let row4 = fft3([x[12], x[2], x[7]]);
-
-    let col0 = fft5([row0[0], row1[0], row2[0], row3[0], row4[0]]);
-    let col1 = fft5([row0[1], row1[1], row2[1], row3[1], row4[1]]);
-    let col2 = fft5([row0[2], row1[2], row2[2], row3[2], row4[2]]);
-
-    [
-        col0[0], col1[1], col2[2], col0[3], col1[4], col2[0], col0[1], col1[2], col2[3], col0[4],
-        col1[0], col2[1], col0[2], col1[3], col2[4],
     ]
 }
 
@@ -1667,60 +1578,6 @@ pub fn fft19<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
     ]
 }
 
-#[inline]
-pub fn fft20<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 20] {
-    let n = 20;
-    let x = input.as_ref();
-    assert_eq!(n, x.len());
-
-    let row0 = fft4([x[0], x[5], x[10], x[15]]);
-    let row1 = fft4([x[4], x[9], x[14], x[19]]);
-    let row2 = fft4([x[8], x[13], x[18], x[3]]);
-    let row3 = fft4([x[12], x[17], x[2], x[7]]);
-    let row4 = fft4([x[16], x[1], x[6], x[11]]);
-
-    let col0 = fft5([row0[0], row1[0], row2[0], row3[0], row4[0]]);
-    let col1 = fft5([row0[1], row1[1], row2[1], row3[1], row4[1]]);
-    let col2 = fft5([row0[2], row1[2], row2[2], row3[2], row4[2]]);
-    let col3 = fft5([row0[3], row1[3], row2[3], row3[3], row4[3]]);
-
-    [
-        col0[0], col1[1], col2[2], col3[3], col0[4], col1[0], col2[1], col3[2], col0[3], col1[4],
-        col2[0], col3[1], col0[2], col1[3], col2[4], col3[0], col0[1], col1[2], col2[3], col3[4],
-    ]
-}
-
-#[inline]
-pub fn fft21<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 21] {
-    let n = 21;
-    let x = input.as_ref();
-    assert_eq!(n, x.len());
-
-    let row0 = fft3([x[0], x[7], x[14]]);
-    let row1 = fft3([x[3], x[10], x[17]]);
-    let row2 = fft3([x[6], x[13], x[20]]);
-    let row3 = fft3([x[9], x[16], x[2]]);
-    let row4 = fft3([x[12], x[19], x[5]]);
-    let row5 = fft3([x[15], x[1], x[8]]);
-    let row6 = fft3([x[18], x[4], x[11]]);
-
-    let col0 = fft7([
-        row0[0], row1[0], row2[0], row3[0], row4[0], row5[0], row6[0],
-    ]);
-    let col1 = fft7([
-        row0[1], row1[1], row2[1], row3[1], row4[1], row5[1], row6[1],
-    ]);
-    let col2 = fft7([
-        row0[2], row1[2], row2[2], row3[2], row4[2], row5[2], row6[2],
-    ]);
-
-    [
-        col0[0], col1[1], col2[2], col0[3], col1[4], col2[5], col0[6], col1[0], col2[1], col0[2],
-        col1[3], col2[4], col0[5], col1[6], col2[0], col0[1], col1[2], col2[3], col0[4], col1[5],
-        col2[6],
-    ]
-}
-
 #[cfg(test)]
 mod tests {
     use num_complex::Complex;
@@ -2027,6 +1884,20 @@ mod tests {
             .collect();
 
         let monarch = fft21(&buf);
+        plan.process(&mut buf);
+
+        assert_slice_equal!(monarch, buf);
+    }
+
+    #[test]
+    fn test_fft22() {
+        let mut p = rustfft::FftPlanner::new();
+        let plan = p.plan_fft_forward(22);
+        let mut buf: Vec<_> = (0..22)
+            .map(|i| Complex::<f64>::new(i as f64, 0.0))
+            .collect();
+
+        let monarch = fft22(&buf);
         plan.process(&mut buf);
 
         assert_slice_equal!(monarch, buf);
