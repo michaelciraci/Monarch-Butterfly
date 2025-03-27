@@ -1667,6 +1667,29 @@ pub fn fft19<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
     ]
 }
 
+#[inline]
+pub fn fft20<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 20] {
+    let n = 20;
+    let x = input.as_ref();
+    assert_eq!(n, x.len());
+
+    let row0 = fft4([x[0], x[5], x[10], x[15]]);
+    let row1 = fft4([x[4], x[9], x[14], x[19]]);
+    let row2 = fft4([x[8], x[13], x[18], x[3]]);
+    let row3 = fft4([x[12], x[17], x[2], x[7]]);
+    let row4 = fft4([x[16], x[1], x[6], x[11]]);
+
+    let col0 = fft5([row0[0], row1[0], row2[0], row3[0], row4[0]]);
+    let col1 = fft5([row0[1], row1[1], row2[1], row3[1], row4[1]]);
+    let col2 = fft5([row0[2], row1[2], row2[2], row3[2], row4[2]]);
+    let col3 = fft5([row0[3], row1[3], row2[3], row3[3], row4[3]]);
+
+    [
+        col0[0], col1[1], col2[2], col3[3], col0[4], col1[0], col2[1], col3[2], col0[3], col1[4],
+        col2[0], col3[1], col0[2], col1[3], col2[4], col3[0], col0[1], col1[2], col2[3], col3[4],
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use num_complex::Complex;
@@ -1945,6 +1968,20 @@ mod tests {
             .collect();
 
         let monarch = fft19(&buf);
+        plan.process(&mut buf);
+
+        assert_slice_equal!(monarch, buf);
+    }
+
+    #[test]
+    fn test_fft20() {
+        let mut p = rustfft::FftPlanner::new();
+        let plan = p.plan_fft_forward(20);
+        let mut buf: Vec<_> = (0..20)
+            .map(|i| Complex::<f64>::new(i as f64, 0.0))
+            .collect();
+
+        let monarch = fft20(&buf);
         plan.process(&mut buf);
 
         assert_slice_equal!(monarch, buf);
