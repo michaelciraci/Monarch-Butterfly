@@ -1021,6 +1021,104 @@ fn test_fft73() {
 }
 
 #[test]
+fn test_fft74() {
+    let mut p = rustfft::FftPlanner::new();
+    let plan = p.plan_fft_forward(74);
+    let mut buf: Vec<_> = (0..74)
+        .map(|i| Complex::<f64>::new(i as f64, 0.0))
+        .collect();
+
+    let monarch = fft74(&buf);
+    plan.process(&mut buf);
+
+    assert_slice_equal!(monarch, buf);
+}
+
+#[test]
+fn test_fft75() {
+    let mut p = rustfft::FftPlanner::new();
+    let plan = p.plan_fft_forward(75);
+    let mut buf: Vec<_> = (0..75)
+        .map(|i| Complex::<f64>::new(i as f64, 0.0))
+        .collect();
+
+    let monarch = fft75(&buf);
+    plan.process(&mut buf);
+
+    assert_slice_equal!(monarch, buf);
+}
+
+#[test]
+fn test_fft76() {
+    let mut p = rustfft::FftPlanner::new();
+    let plan = p.plan_fft_forward(76);
+    let mut buf: Vec<_> = (0..76)
+        .map(|i| Complex::<f64>::new(i as f64, 0.0))
+        .collect();
+
+    let monarch = fft76(&buf);
+    plan.process(&mut buf);
+
+    assert_slice_equal!(monarch, buf);
+}
+
+#[test]
+fn test_fft77() {
+    let mut p = rustfft::FftPlanner::new();
+    let plan = p.plan_fft_forward(77);
+    let mut buf: Vec<_> = (0..77)
+        .map(|i| Complex::<f64>::new(i as f64, 0.0))
+        .collect();
+
+    let monarch = fft77(&buf);
+    plan.process(&mut buf);
+
+    assert_slice_equal!(monarch, buf);
+}
+
+#[test]
+fn test_fft78() {
+    let mut p = rustfft::FftPlanner::new();
+    let plan = p.plan_fft_forward(78);
+    let mut buf: Vec<_> = (0..78)
+        .map(|i| Complex::<f64>::new(i as f64, 0.0))
+        .collect();
+
+    let monarch = fft78(&buf);
+    plan.process(&mut buf);
+
+    assert_slice_equal!(monarch, buf);
+}
+
+#[test]
+fn test_fft79() {
+    let mut p = rustfft::FftPlanner::new();
+    let plan = p.plan_fft_forward(79);
+    let mut buf: Vec<_> = (0..79)
+        .map(|i| Complex::<f64>::new(i as f64, 0.0))
+        .collect();
+
+    let monarch = fft79(&buf);
+    plan.process(&mut buf);
+
+    assert_slice_equal!(monarch, buf);
+}
+
+#[test]
+fn test_fft80() {
+    let mut p = rustfft::FftPlanner::new();
+    let plan = p.plan_fft_forward(80);
+    let mut buf: Vec<_> = (0..80)
+        .map(|i| Complex::<f64>::new(i as f64, 0.0))
+        .collect();
+
+    let monarch = fft80(&buf);
+    plan.process(&mut buf);
+
+    assert_slice_equal!(monarch, buf);
+}
+
+#[test]
 fn test_butterfly_1024() {
     let v: Vec<_> = (0..1024)
         .map(|i: i32| Complex::new(i as f32, i as f32))

@@ -8,7 +8,7 @@ use quote::quote;
 use syn::Ident;
 
 const SIZES: [usize; 11] = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
-const COPRIMES: [(usize, usize); 39] = [
+const COPRIMES: [(usize, usize); 45] = [
     (2, 3),
     (2, 5),
     (4, 3),
@@ -48,10 +48,16 @@ const COPRIMES: [(usize, usize); 39] = [
     (3, 23),
     (7, 10),
     (8, 9),
+    (2, 37),
+    (3, 25),
+    (4, 19),
+    (7, 11),
+    (6, 13),
+    (5, 16)
 ];
 const MIXED_RADIX: [(usize, usize); 4] = [(5, 5), (6, 6), (6, 8), (7, 7)];
-const PRIMES: [usize; 19] = [
-    5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73,
+const PRIMES: [usize; 20] = [
+    5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79
 ];
 
 fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
