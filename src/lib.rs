@@ -34,6 +34,7 @@ use num_traits::{Float, FloatConst};
 const SQRT_3: f64 = 1.7320508075688772;
 const SQRT_3_DIV_2: f64 = SQRT_3 / 2.0;
 
+monarch_derive::generate_switch!();
 monarch_derive::generate_powers_of_two!();
 monarch_derive::generate_coprimes!();
 monarch_derive::generate_mixed_radix!();

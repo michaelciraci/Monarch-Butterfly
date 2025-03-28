@@ -17,6 +17,8 @@ const SIZES: [usize; 126] = [
     121, 122, 123, 124, 126, 127, 128, 256, 512, 1024, 2048,
 ];
 
+const HAND_GEN: [usize; 4] = [3, 9, 18, 27];
+
 #[derive(PartialEq, Debug)]
 enum FFTType {
     PowerOfTwo,
@@ -65,6 +67,35 @@ fn compute_twiddle_forward<T: Float + FloatConst>(index: usize, fft_len: usize) 
     let angle = constant * T::from(index).unwrap();
 
     Complex::new(angle.cos(), angle.sin())
+}
+
+#[proc_macro]
+pub fn generate_switch(_input: TokenStream) -> TokenStream {
+    let mut all_sizes: Vec<_> = SIZES.clone().into_iter().chain(HAND_GEN.clone().into_iter()).collect();
+    all_sizes.sort();
+
+    let ss = all_sizes.into_iter().map(|s| {
+        let func = Ident::new(&format!("fft{}", s), Span::call_site().into());
+
+        quote! {
+            #s => { output.copy_from_slice(&#func(x_in)) },
+        }
+    });
+
+    let expanded = quote! {
+        #[inline]
+        pub fn fft<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
+            let x_in = input.as_ref();
+            assert_eq!(x_in.len(), output.len());
+
+            match x_in.len() {
+                1 => { output[0] = x_in[0] },
+                #(#ss)*
+                _ => unimplemented!(),
+            };
+        }
+    };
+    proc_macro::TokenStream::from(expanded)
 }
 
 #[proc_macro]
