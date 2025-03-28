@@ -59,7 +59,7 @@ fn compute_coprimes(n: usize) -> (usize, usize) {
     todo!()
 }
 
-fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
+fn compute_twiddle_forward<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
     let constant = T::from(-2.0).unwrap() * T::PI() / T::from(fft_len).unwrap();
     // index * -2PI / fft_len
     let angle = constant * T::from(index).unwrap();
@@ -242,7 +242,7 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
         let mut twiddles = vec![Complex::<f64>::new(0.0, 0.0); s];
         for (x, twiddle_chunk) in twiddles.chunks_exact_mut(c2).enumerate() {
             for (y, twiddle_element) in twiddle_chunk.iter_mut().enumerate() {
-                *twiddle_element = _compute_twiddle(x * y, s);
+                *twiddle_element = compute_twiddle_forward(x * y, s);
             }
         }
 
@@ -308,7 +308,7 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
         let halflen = (s + 1) / 2;
         let twiddles = (1..halflen).map(|n| {
             let var = Ident::new(&format!("twiddle{}", n), Span::call_site().into());
-            let val: Complex<f64> = _compute_twiddle(n, s);
+            let val: Complex<f64> = compute_twiddle_forward(n, s);
             let re = val.re;
             let im = val.im;
             quote! {
