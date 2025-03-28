@@ -8,7 +8,7 @@ use quote::quote;
 use syn::Ident;
 
 const SIZES: [usize; 11] = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
-const COPRIMES: [(usize, usize); 22] = [
+const COPRIMES: [(usize, usize); 27] = [
     (2, 3),
     (2, 5),
     (4, 3),
@@ -31,9 +31,14 @@ const COPRIMES: [(usize, usize); 22] = [
     (4, 11),
     (5, 9),
     (2, 23),
+    (2, 25),
+    (3, 17),
+    (4, 13),
+    (2, 27),
+    (5, 11),
 ];
 const MIXED_RADIX: [(usize, usize); 4] = [(5, 5), (6, 6), (6, 8), (7, 7)];
-const PRIMES: [usize; 13] = [5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
+const PRIMES: [usize; 14] = [5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53];
 
 fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
     let constant = T::from(-2.0).unwrap() * T::PI() / T::from(fft_len).unwrap();
@@ -124,12 +129,12 @@ pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
             let idx = (0..c1).map(|_| {
                 let index = start;
                 start = (start + c2) % s;
-                quote! { 
-                    x[#index],  
+                quote! {
+                    x[#index],
                 }}
             );
             let row_call = Ident::new(&format!("row{}", i), Span::call_site().into());
-            
+
             quote! {
                 let #row_call = #func1([ #(#idx)* ]);
         }});
@@ -192,12 +197,12 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
         let rows = (0..c1).map(|i|  {
             let idx = (i..s).step_by(c1).map(|xx| {
                 let index = xx % s;
-                quote! { 
-                    x[#index],  
+                quote! {
+                    x[#index],
                 }}
             );
             let row_call = Ident::new(&format!("row{}", i), Span::call_site().into());
-            
+
             quote! {
                 let #row_call = #func2([ #(#idx)* ]);
         }});
@@ -326,8 +331,7 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
                     quote! {
                         + #var2.im * #var3.im
                     }
-                } 
-                
+                }
             });
 
             quote! {
@@ -372,8 +376,7 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
                     quote! {
                         + #var2.im * #var3.re
                     }
-                } 
-                
+                }
             });
 
             quote! {
@@ -385,14 +388,12 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
             let mut nfold = n;
             if n > s / 2 {
                 nfold = s - n;
-            
                 let var1 = Ident::new(&format!("out{}re", n), Span::call_site().into());
                 let var2 = Ident::new(&format!("out{}im", n), Span::call_site().into());
                 let var3 = Ident::new(&format!("b{}{}re_a", nfold, s-nfold), Span::call_site().into());
                 let var4 = Ident::new(&format!("b{}{}re_b", nfold, s-nfold), Span::call_site().into());
                 let var5 = Ident::new(&format!("b{}{}im_a", nfold, s-nfold), Span::call_site().into());
                 let var6 = Ident::new(&format!("b{}{}im_b", nfold, s-nfold), Span::call_site().into());
-
                 quote! {
                     let #var1 = #var3 + #var4;
                     let #var2 = #var5 - #var6;
@@ -413,7 +414,6 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
         let eigth_codegen = (1..s).map(|n| {
             let var_re: Ident = Ident::new(&format!("out{}re", n), Span::call_site().into());
             let var_im: Ident = Ident::new(&format!("out{}im", n), Span::call_site().into());
-
             quote! {
                 Complex::new(#var_re, #var_im),
             }
