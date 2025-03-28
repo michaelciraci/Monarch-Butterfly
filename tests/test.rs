@@ -143,6 +143,12 @@ compare_against_rustfft!(test_96, 96);
 compare_against_rustfft!(test_97, 97);
 compare_against_rustfft!(test_98, 98);
 compare_against_rustfft!(test_99, 99);
+compare_against_rustfft!(test_100, 100);
+compare_against_rustfft!(test_101, 101);
+compare_against_rustfft!(test_102, 102);
+compare_against_rustfft!(test_103, 103);
+compare_against_rustfft!(test_104, 104);
+compare_against_rustfft!(test_105, 105);
 
 fn butterfly(x: Vec<Complex<f32>>) -> Vec<Complex<f32>> {
     let n = x.len();
