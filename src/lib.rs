@@ -3754,6 +3754,20 @@ mod tests {
     }
 
     #[test]
+    fn test_fft30() {
+        let mut p = rustfft::FftPlanner::new();
+        let plan = p.plan_fft_forward(30);
+        let mut buf: Vec<_> = (0..30)
+            .map(|i| Complex::<f64>::new(i as f64, 0.0))
+            .collect();
+
+        let monarch = fft30(&buf);
+        plan.process(&mut buf);
+
+        assert_slice_equal!(monarch, buf);
+    }
+
+    #[test]
     fn test_butterfly_1024() {
         let v: Vec<_> = (0..1024)
             .map(|i: i32| Complex::new(i as f32, i as f32))

@@ -8,7 +8,7 @@ use quote::quote;
 use syn::Ident;
 
 const SIZES: [usize; 11] = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
-const COPRIMES: [(usize, usize); 10] = [
+const COPRIMES: [(usize, usize); 11] = [
     (2, 5),
     (4, 3),
     (2, 7),
@@ -19,6 +19,7 @@ const COPRIMES: [(usize, usize); 10] = [
     (3, 8),
     (2, 13),
     (4, 7),
+    (5, 6),
 ];
 const MIXED_RADIX: [(usize, usize); 1] = [(5, 5)];
 
