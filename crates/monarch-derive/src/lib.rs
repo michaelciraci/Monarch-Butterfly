@@ -22,7 +22,7 @@ const COPRIMES: [(usize, usize); 11] = [
     (5, 6),
 ];
 const MIXED_RADIX: [(usize, usize); 1] = [(5, 5)];
-const PRIMES: [usize; 8] = [5, 7, 11, 13, 17, 19, 23, 29];
+const PRIMES: [usize; 9] = [5, 7, 11, 13, 17, 19, 23, 29, 31];
 
 fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
     let constant = T::from(-2.0).unwrap() * T::PI() / T::from(fft_len).unwrap();
