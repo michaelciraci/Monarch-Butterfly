@@ -8,16 +8,41 @@ use proc_macro::{Span, TokenStream};
 use quote::quote;
 use syn::Ident;
 
-const SIZES: [usize; 11] = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
-const COPRIMES: [usize; 50] = [
-    6, 10, 12, 14, 15, 20, 21, 22, 24, 26, 28, 30, 33, 34, 35, 38, 39, 40, 42, 44, 45, 46, 50, 51,
-    52, 54, 55, 56, 57, 58, 60, 62, 63, 65, 66, 68, 69, 70, 72, 74, 75, 76, 77, 78, 80, 82, 84, 85,
-    86, 87,
+const SIZES: [usize; 91] = [
+    2, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30,
+    31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
+    55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+    79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 97, 128, 256, 512, 1024, 2048,
 ];
-const MIXED_RADIX: [(usize, usize); 5] = [(5, 5), (6, 6), (6, 8), (7, 7), (9, 9)];
-const PRIMES: [usize; 23] = [
-    5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
-];
+
+#[derive(PartialEq, Debug)]
+enum FFTType {
+    PowerOfTwo,
+    Prime,
+    Coprime,
+    Mixed,
+}
+
+impl FFTType {
+    fn compute_type(n: usize) -> FFTType {
+        if n.is_power_of_two() {
+            FFTType::PowerOfTwo
+        } else {
+            // Check if it has an integer square root
+            let sqr = (n as f64).sqrt().round() as usize;
+            if sqr * sqr == n && sqr % 2 == 1 {
+                FFTType::Mixed
+            } else {
+                let (v1, _v2) = compute_coprimes(n);
+                if v1 == 1 {
+                    FFTType::Prime
+                } else {
+                    FFTType::Coprime
+                }
+            }
+        }
+    }
+}
 
 fn compute_coprimes(n: usize) -> (usize, usize) {
     let sqr = (n as f32).sqrt().ceil() as usize;
@@ -42,7 +67,11 @@ fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Comp
 
 #[proc_macro]
 pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
-    let ss = SIZES.clone().into_iter().map(|s| {
+    let sizes = SIZES
+        .clone()
+        .into_iter()
+        .filter(|n| FFTType::compute_type(*n) == FFTType::PowerOfTwo);
+    let ss = sizes.map(|s| {
         let func = Ident::new(&format!("fft{}", s), Span::call_site().into());
         let half = s / 2;
         let half_butterfly = Ident::new(&format!("fft{}", half), Span::call_site().into());
@@ -110,7 +139,11 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
 
 #[proc_macro]
 pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
-    let ss = COPRIMES.clone().into_iter().map(|s| {
+    let sizes = SIZES
+        .clone()
+        .into_iter()
+        .filter(|n| FFTType::compute_type(*n) == FFTType::Coprime);
+    let ss = sizes.map(|s| {
         let (c1, c2) = compute_coprimes(s);
         let func = Ident::new(&format!("fft{}", s), Span::call_site().into());
         let func1 = Ident::new(&format!("fft{}", c1), Span::call_site().into());
@@ -180,8 +213,13 @@ pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
 
 #[proc_macro]
 pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
-    let ss = MIXED_RADIX.clone().into_iter().map(|(c1, c2)| {
-        let s = c1 * c2;
+    let sizes = SIZES
+        .clone()
+        .into_iter()
+        .filter(|n| FFTType::compute_type(*n) == FFTType::Mixed);
+    let ss = sizes.map(|s| {
+        let c1 = (s as f64).sqrt().round() as usize;
+        let c2 = c1;
         let func = Ident::new(&format!("fft{}", s), Span::call_site().into());
         let func1 = Ident::new(&format!("fft{}", c1), Span::call_site().into());
         let func2 = Ident::new(&format!("fft{}", c2), Span::call_site().into());
@@ -259,7 +297,11 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
 
 #[proc_macro]
 pub fn generate_primes(_input: TokenStream) -> TokenStream {
-    let ss = PRIMES.clone().into_iter().map(|s| {
+    let sizes = SIZES
+        .clone()
+        .into_iter()
+        .filter(|n| FFTType::compute_type(*n) == FFTType::Prime);
+    let ss = sizes.map(|s| {
         let func = Ident::new(&format!("fft{}", s), Span::call_site().into());
         let halflen = (s + 1) / 2;
         let twiddles = (1..halflen).map(|n| {
@@ -444,7 +486,7 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
 
 #[cfg(test)]
 mod tests {
-    use crate::compute_coprimes;
+    use crate::*;
 
     #[test]
     fn test_coprimes() {
@@ -507,5 +549,11 @@ mod tests {
             assert_eq!(v1, computed_v1);
             assert_eq!(v2, computed_v2);
         }
+    }
+
+    #[test]
+    fn test_fft_type() {
+        assert_eq!(FFTType::compute_type(25), FFTType::Mixed);
+        assert_eq!(FFTType::compute_type(36), FFTType::Coprime);
     }
 }

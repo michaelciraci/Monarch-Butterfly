@@ -1217,6 +1217,48 @@ fn test_fft87() {
 }
 
 #[test]
+fn test_fft88() {
+    let mut p = rustfft::FftPlanner::new();
+    let plan = p.plan_fft_forward(88);
+    let mut buf: Vec<_> = (0..88)
+        .map(|i| Complex::<f64>::new(i as f64, 0.0))
+        .collect();
+
+    let monarch = fft88(&buf);
+    plan.process(&mut buf);
+
+    assert_slice_equal!(monarch, buf);
+}
+
+#[test]
+fn test_fft89() {
+    let mut p = rustfft::FftPlanner::new();
+    let plan = p.plan_fft_forward(89);
+    let mut buf: Vec<_> = (0..89)
+        .map(|i| Complex::<f64>::new(i as f64, 0.0))
+        .collect();
+
+    let monarch = fft89(&buf);
+    plan.process(&mut buf);
+
+    assert_slice_equal!(monarch, buf);
+}
+
+#[test]
+fn test_fft90() {
+    let mut p = rustfft::FftPlanner::new();
+    let plan = p.plan_fft_forward(90);
+    let mut buf: Vec<_> = (0..90)
+        .map(|i| Complex::<f64>::new(i as f64, 0.0))
+        .collect();
+
+    let monarch = fft90(&buf);
+    plan.process(&mut buf);
+
+    assert_slice_equal!(monarch, buf);
+}
+
+#[test]
 fn test_butterfly_1024() {
     let v: Vec<_> = (0..1024)
         .map(|i: i32| Complex::new(i as f32, i as f32))
