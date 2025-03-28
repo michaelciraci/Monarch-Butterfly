@@ -73,22 +73,6 @@ pub fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex
 }
 
 #[inline]
-pub fn fft6<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 6] {
-    let n = 6;
-    let x = input.as_ref();
-    assert_eq!(n, x.len());
-
-    let left = fft3([x[0], x[2], x[4]]);
-    let right = fft3([x[3], x[5], x[1]]);
-
-    let row1 = fft2([left[0], right[0]]);
-    let row2 = fft2([left[1], right[1]]);
-    let row3 = fft2([left[2], right[2]]);
-
-    [row1[0], row2[1], row3[0], row1[1], row2[0], row3[1]]
-}
-
-#[inline]
 pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 9] {
     let n = 9;
     let x = input.as_ref();

@@ -8,7 +8,8 @@ use quote::quote;
 use syn::Ident;
 
 const SIZES: [usize; 11] = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
-const COPRIMES: [(usize, usize); 21] = [
+const COPRIMES: [(usize, usize); 22] = [
+    (2, 3),
     (2, 5),
     (4, 3),
     (2, 7),
