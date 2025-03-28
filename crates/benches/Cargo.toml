@@ -9,6 +9,7 @@ num-complex = "0.4.6"
 
 [dev-dependencies]
 criterion = "0.5"
+fftw = "0.8.0"
 rustfft = "6.2.0"
 
 [[bench]]

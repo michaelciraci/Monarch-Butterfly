@@ -1,4 +1,9 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use fftw::{
+    array::AlignedVec,
+    plan::{C2CPlan, C2CPlan32},
+    types::{Flag, Sign},
+};
 use monarch_butterfly::*;
 use num_complex::Complex;
 use rustfft::FftPlanner;
@@ -24,18 +29,29 @@ macro_rules! generate_comparison {
                 let _ = fft::<$idx, _, _>(black_box(input));
             })
         });
+
+        let n = $idx;
+        let mut plan: C2CPlan32 = C2CPlan::aligned(&[n], Sign::Forward, Flag::MEASURE).unwrap();
+        let mut a = AlignedVec::new(n);
+        let mut o = AlignedVec::new(n);
+
+        $c.bench_function(&format!("fftw-{}", $idx), |b| {
+            b.iter(|| {
+                plan.c2c(&mut a, &mut o).unwrap();
+            })
+        });
     }};
 }
 
 fn compare(c: &mut Criterion) {
-    generate_comparison!(79, c);
-    generate_comparison!(80, c);
-    generate_comparison!(81, c);
-    generate_comparison!(82, c);
-    generate_comparison!(83, c);
-    generate_comparison!(84, c);
-    generate_comparison!(85, c);
-    generate_comparison!(86, c);
+    generate_comparison!(9, c);
+    generate_comparison!(10, c);
+    generate_comparison!(11, c);
+    generate_comparison!(12, c);
+    generate_comparison!(13, c);
+    generate_comparison!(14, c);
+    generate_comparison!(15, c);
+    generate_comparison!(16, c);
 }
 
 criterion_group!(benches, compare);
