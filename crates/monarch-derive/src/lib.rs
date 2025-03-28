@@ -8,7 +8,7 @@ use quote::quote;
 use syn::Ident;
 
 const SIZES: [usize; 11] = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
-const COPRIMES: [(usize, usize); 11] = [
+const COPRIMES: [(usize, usize); 14] = [
     (2, 5),
     (4, 3),
     (2, 7),
@@ -20,8 +20,11 @@ const COPRIMES: [(usize, usize); 11] = [
     (2, 13),
     (4, 7),
     (5, 6),
+    (3, 11),
+    (2, 17),
+    (5, 7),
 ];
-const MIXED_RADIX: [(usize, usize); 1] = [(5, 5)];
+const MIXED_RADIX: [(usize, usize); 2] = [(5, 5), (6, 6)];
 const PRIMES: [usize; 9] = [5, 7, 11, 13, 17, 19, 23, 29, 31];
 
 fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
@@ -179,10 +182,8 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
         let func2 = Ident::new(&format!("fft{}", c2), Span::call_site().into());
 
         let rows = (0..c2).map(|i|  {
-            // let mut start = c1 * i;
             let idx = (i..s).step_by(c1).map(|xx| {
                 let index = xx % s;
-                // start = (start + c2) % s;
                 quote! { 
                     x[#index],  
                 }}
@@ -193,10 +194,10 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
                 let #row_call = #func1([ #(#idx)* ]);
         }});
 
-        let mut twiddles = vec![Complex::<f64>::new(0.0, 0.0); 25];
-        for (x, twiddle_chunk) in twiddles.chunks_exact_mut(5).enumerate() {
+        let mut twiddles = vec![Complex::<f64>::new(0.0, 0.0); s];
+        for (x, twiddle_chunk) in twiddles.chunks_exact_mut(c1).enumerate() {
             for (y, twiddle_element) in twiddle_chunk.iter_mut().enumerate() {
-                *twiddle_element = _compute_twiddle(x * y, 25);
+                *twiddle_element = _compute_twiddle(x * y, s);
             }
         }
 
