@@ -2,68 +2,35 @@
 //! FFTs for [monarch-butterfly](https://crates.io/crates/monarch-butterfly)
 
 use num_complex::Complex;
+use num_integer::Integer;
 use num_traits::{Float, FloatConst};
 use proc_macro::{Span, TokenStream};
 use quote::quote;
 use syn::Ident;
 
 const SIZES: [usize; 11] = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
-const COPRIMES: [(usize, usize); 50] = [
-    (2, 3),
-    (2, 5),
-    (4, 3),
-    (2, 7),
-    (3, 5),
-    (4, 5),
-    (3, 7),
-    (2, 11),
-    (3, 8),
-    (2, 13),
-    (4, 7),
-    (5, 6),
-    (3, 11),
-    (2, 17),
-    (5, 7),
-    (2, 19),
-    (3, 13),
-    (5, 8),
-    (6, 7),
-    (4, 11),
-    (5, 9),
-    (2, 23),
-    (2, 25),
-    (3, 17),
-    (4, 13),
-    (2, 27),
-    (5, 11),
-    (7, 8),
-    (3, 19),
-    (2, 29),
-    (5, 12),
-    (2, 31),
-    (9, 7),
-    (5, 13),
-    (6, 11),
-    (4, 17),
-    (3, 23),
-    (7, 10),
-    (8, 9),
-    (2, 37),
-    (3, 25),
-    (4, 19),
-    (7, 11),
-    (6, 13),
-    (5, 16),
-    (2, 41),
-    (7, 12),
-    (5, 17),
-    (2, 43),
-    (3, 29),
+const COPRIMES: [usize; 50] = [
+    6, 10, 12, 14, 15, 20, 21, 22, 24, 26, 28, 30, 33, 34, 35, 38, 39, 40, 42, 44, 45, 46, 50, 51,
+    52, 54, 55, 56, 57, 58, 60, 62, 63, 65, 66, 68, 69, 70, 72, 74, 75, 76, 77, 78, 80, 82, 84, 85,
+    86, 87,
 ];
 const MIXED_RADIX: [(usize, usize); 5] = [(5, 5), (6, 6), (6, 8), (7, 7), (9, 9)];
 const PRIMES: [usize; 23] = [
-    5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97
+    5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
 ];
+
+fn compute_coprimes(n: usize) -> (usize, usize) {
+    let sqr = (n as f32).sqrt().ceil() as usize;
+    for v1 in (1..sqr).rev() {
+        let v2 = n / v1;
+        if v2 * v1 == n {
+            if v1.gcd(&v2) == 1 {
+                return (usize::min(v1, v2), usize::max(v1, v2));
+            }
+        }
+    }
+    todo!()
+}
 
 fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
     let constant = T::from(-2.0).unwrap() * T::PI() / T::from(fft_len).unwrap();
@@ -143,8 +110,8 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
 
 #[proc_macro]
 pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
-    let ss = COPRIMES.clone().into_iter().map(|(c1, c2)| {
-        let s = c1 * c2;
+    let ss = COPRIMES.clone().into_iter().map(|s| {
+        let (c1, c2) = compute_coprimes(s);
         let func = Ident::new(&format!("fft{}", s), Span::call_site().into());
         let func1 = Ident::new(&format!("fft{}", c1), Span::call_site().into());
         let func2 = Ident::new(&format!("fft{}", c2), Span::call_site().into());
@@ -473,4 +440,72 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
         #(#ss)*
     };
     proc_macro::TokenStream::from(expanded)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::compute_coprimes;
+
+    #[test]
+    fn test_coprimes() {
+        let coprimes = vec![
+            (2, 3),
+            (2, 5),
+            (3, 4),
+            (2, 7),
+            (3, 5),
+            (4, 5),
+            (3, 7),
+            (2, 11),
+            (3, 8),
+            (2, 13),
+            (4, 7),
+            (5, 6),
+            (3, 11),
+            (2, 17),
+            (5, 7),
+            (2, 19),
+            (3, 13),
+            (5, 8),
+            (6, 7),
+            (4, 11),
+            (5, 9),
+            (2, 23),
+            (2, 25),
+            (3, 17),
+            (4, 13),
+            (2, 27),
+            (5, 11),
+            (7, 8),
+            (3, 19),
+            (2, 29),
+            (5, 12),
+            (2, 31),
+            (7, 9),
+            (5, 13),
+            (6, 11),
+            (4, 17),
+            (3, 23),
+            (7, 10),
+            (8, 9),
+            (2, 37),
+            (3, 25),
+            (4, 19),
+            (7, 11),
+            (6, 13),
+            (5, 16),
+            (2, 41),
+            (7, 12),
+            (5, 17),
+            (2, 43),
+            (3, 29),
+        ];
+        for (v1, v2) in coprimes {
+            let n = v1 * v2;
+            let (computed_v1, computed_v2) = compute_coprimes(n);
+            dbg!(n, v1, v2, computed_v1, computed_v2);
+            assert_eq!(v1, computed_v1);
+            assert_eq!(v2, computed_v2);
+        }
+    }
 }
