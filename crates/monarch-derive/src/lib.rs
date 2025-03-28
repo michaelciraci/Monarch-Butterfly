@@ -14,7 +14,7 @@ const SIZES: [usize; 122] = [
     55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
     79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101,
     102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
-    121, 122, 123, 124, 126, 127, 128
+    121, 122, 123, 124, 126, 127, 128,
 ];
 
 const HAND_GEN: [usize; 4] = [3, 9, 18, 27];
@@ -71,14 +71,28 @@ fn compute_twiddle_forward<T: Float + FloatConst>(index: usize, fft_len: usize) 
 
 #[proc_macro]
 pub fn generate_switch(_input: TokenStream) -> TokenStream {
-    let mut all_sizes: Vec<_> = SIZES.clone().into_iter().chain(HAND_GEN.clone().into_iter()).collect();
+    let mut all_sizes: Vec<_> = SIZES
+        .clone()
+        .into_iter()
+        .chain(HAND_GEN.clone().into_iter())
+        .collect();
     all_sizes.sort();
 
-    let ss = all_sizes.into_iter().map(|s| {
+    let ss_forward = all_sizes.clone().into_iter().map(|s| {
         let func = Ident::new(&format!("fft{}", s), Span::call_site().into());
 
         quote! {
-            #s => { 
+            #s => {
+                let x = #func(x_in);
+                std::array::from_fn(|i| x[i])
+             },
+        }
+    });
+    let ss_inverse = all_sizes.into_iter().map(|s| {
+        let func = Ident::new(&format!("ifft{}", s), Span::call_site().into());
+
+        quote! {
+            #s => {
                 let x = #func(x_in);
                 std::array::from_fn(|i| x[i])
              },
@@ -93,7 +107,19 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
 
             match N {
                 1 => { std::array::from_fn(|i| x_in[i]) },
-                #(#ss)*
+                #(#ss_forward)*
+                _ => unimplemented!(),
+            }
+        }
+
+        #[inline]
+        pub fn ifft<const N: usize, T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; N] {
+            let x_in = input.as_ref();
+            assert_eq!(x_in.len(), N);
+
+            match N {
+                1 => { std::array::from_fn(|i| x_in[i]) },
+                #(#ss_inverse)*
                 _ => unimplemented!(),
             }
         }
@@ -138,7 +164,7 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[inline]
-            fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
@@ -164,8 +190,12 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         #[inline]
-        fn fft1<T: Float>(x: [Complex<T>; 1]) -> [Complex<T>; 1] {
-            x
+        pub fn fft1<T: Float, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 1] {
+            let n = 1;
+            let x = input.as_ref();
+            assert_eq!(n, x.len());
+
+            [x[0]]
         }
 
         #(#ss)*
@@ -226,7 +256,7 @@ pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[inline]
-            fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
@@ -310,7 +340,7 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[inline]
-            fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
@@ -491,7 +521,7 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[inline]
-            fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
@@ -516,6 +546,61 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         #(#ss)*
+    };
+    proc_macro::TokenStream::from(expanded)
+}
+
+#[proc_macro]
+pub fn generate_iffts(_input: TokenStream) -> TokenStream {
+    let mut all_sizes: Vec<_> = SIZES
+        .clone()
+        .into_iter()
+        .chain(HAND_GEN.clone().into_iter())
+        .collect();
+    all_sizes.sort();
+    let iffts = all_sizes.into_iter().map(|n| {
+        let func = Ident::new(&format!("ifft{}", n), Span::call_site().into());
+        let input_args = (0..n).map(|i| {
+
+            quote! {
+                x[#i].conj(),
+            }
+        });
+        let output_args = (0..n).map(|i| {
+
+            quote! {
+                out[#i].conj(),
+            }
+        });
+
+        quote! {
+            #[inline]
+            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #n] {
+                let x = input.as_ref();
+                assert_eq!(x.len(), #n);
+
+                let out: [Complex<T>; #n] = fft::<#n, _, _>([
+                    #(#input_args)*
+                ]);
+                [
+                    #(#output_args)*
+                ]
+
+            }
+        }
+    });
+
+    let expanded = quote! {
+        #[inline]
+        pub fn ifft1<T: Float, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 1] {
+            let n = 1;
+            let x = input.as_ref();
+            assert_eq!(n, x.len());
+
+            [x[0]]
+        }
+
+        #(#iffts)*
     };
     proc_macro::TokenStream::from(expanded)
 }

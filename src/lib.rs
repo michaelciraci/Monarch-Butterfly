@@ -39,6 +39,7 @@ monarch_derive::generate_powers_of_two!();
 monarch_derive::generate_coprimes!();
 monarch_derive::generate_mixed_radix!();
 monarch_derive::generate_primes!();
+monarch_derive::generate_iffts!();
 
 fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
     let constant = T::from(-2.0).unwrap() * T::PI() / T::from(fft_len).unwrap();
