@@ -78,21 +78,24 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
         let func = Ident::new(&format!("fft{}", s), Span::call_site().into());
 
         quote! {
-            #s => { output.copy_from_slice(&#func(x_in)) },
+            #s => { 
+                let x = #func(x_in);
+                std::array::from_fn(|i| x[i])
+             },
         }
     });
 
     let expanded = quote! {
         #[inline]
-        pub fn fft<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
+        pub fn fft<const N: usize, T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; N] {
             let x_in = input.as_ref();
-            assert_eq!(x_in.len(), output.len());
+            assert_eq!(x_in.len(), N);
 
-            match x_in.len() {
-                1 => { output[0] = x_in[0] },
+            match N {
+                1 => { std::array::from_fn(|i| x_in[i]) },
                 #(#ss)*
                 _ => unimplemented!(),
-            };
+            }
         }
     };
     proc_macro::TokenStream::from(expanded)

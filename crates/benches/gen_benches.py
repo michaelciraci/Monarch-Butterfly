@@ -1,0 +1,12 @@
+for i in range(1, 100):
+    print('{')
+    print('let mut planner = FftPlanner::<f32>::new();')
+    print('let p = planner.plan_fft_forward(%d);' % i)
+    print('let mut input = vec![Complex::<f32>::ZERO; %d];' % i)
+    print('let mut scratch = vec![Complex::ZERO; p.get_inplace_scratch_len()];')
+    print('c.bench_function("rustfft-%d", |b| {' % i)
+    print('b.iter(|| { p.process_with_scratch(&mut input, &mut scratch); }) });')
+    print('let input = [Complex::<f32>::ZERO; %d];' % i)
+    print('c.bench_function("monarch-%d", |b| {' % i)
+    print('b.iter(|| { let _ = fft::<%d, _, _>(black_box(input)); }); });' % i)
+    print('}')
