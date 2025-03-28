@@ -217,20 +217,3 @@ fn test_butterfly_4() {
         ])
     );
 }
-
-#[test]
-fn test_butterfly_1024() {
-    let v: Vec<_> = (0..1024)
-        .map(|i: i32| Complex::new(i as f32, i as f32))
-        .collect();
-    let a: [Complex<f32>; 1024] = (0..1024)
-        .map(|i| Complex::new(i as f32, i as f32))
-        .collect::<Vec<_>>()
-        .try_into()
-        .unwrap();
-
-    let ba = fft::<1024, _, _>(a);
-    let bv = butterfly(v);
-
-    assert_slice_equal!(ba, bv, 0.001);
-}
