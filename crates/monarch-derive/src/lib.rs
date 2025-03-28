@@ -8,7 +8,7 @@ use quote::quote;
 use syn::Ident;
 
 const SIZES: [usize; 11] = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
-const COPRIMES: [(usize, usize); 14] = [
+const COPRIMES: [(usize, usize); 21] = [
     (2, 5),
     (4, 3),
     (2, 7),
@@ -23,9 +23,16 @@ const COPRIMES: [(usize, usize); 14] = [
     (3, 11),
     (2, 17),
     (5, 7),
+    (2, 19),
+    (3, 13),
+    (5, 8),
+    (6, 7),
+    (4, 11),
+    (5, 9),
+    (2, 23),
 ];
-const MIXED_RADIX: [(usize, usize); 2] = [(5, 5), (6, 6)];
-const PRIMES: [usize; 9] = [5, 7, 11, 13, 17, 19, 23, 29, 31];
+const MIXED_RADIX: [(usize, usize); 3] = [(5, 5), (6, 6), (6, 8)];
+const PRIMES: [usize; 13] = [5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
 
 fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
     let constant = T::from(-2.0).unwrap() * T::PI() / T::from(fft_len).unwrap();
@@ -181,7 +188,7 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
         let func1 = Ident::new(&format!("fft{}", c1), Span::call_site().into());
         let func2 = Ident::new(&format!("fft{}", c2), Span::call_site().into());
 
-        let rows = (0..c2).map(|i|  {
+        let rows = (0..c1).map(|i|  {
             let idx = (i..s).step_by(c1).map(|xx| {
                 let index = xx % s;
                 quote! { 
@@ -191,23 +198,23 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
             let row_call = Ident::new(&format!("row{}", i), Span::call_site().into());
             
             quote! {
-                let #row_call = #func1([ #(#idx)* ]);
+                let #row_call = #func2([ #(#idx)* ]);
         }});
 
         let mut twiddles = vec![Complex::<f64>::new(0.0, 0.0); s];
-        for (x, twiddle_chunk) in twiddles.chunks_exact_mut(c1).enumerate() {
+        for (x, twiddle_chunk) in twiddles.chunks_exact_mut(c2).enumerate() {
             for (y, twiddle_element) in twiddle_chunk.iter_mut().enumerate() {
                 *twiddle_element = _compute_twiddle(x * y, s);
             }
         }
 
-        let cols = (0..c1).map(|i| {
+        let cols = (0..c2).map(|i| {
             let mut start_idx = i;
-            let idx = (0..c2).map(|ii| {
+            let idx = (0..c1).map(|ii| {
                 let row_call = Ident::new(&format!("row{}", ii), Span::call_site().into());
                 let re = twiddles[start_idx].re;
                 let im = twiddles[start_idx].im;
-                start_idx = (start_idx + c1) % s;
+                start_idx += c2;
                 quote! {
                     #row_call[#i] * Complex::new(T::from(#re).unwrap(), T::from(#im).unwrap())
                 }
@@ -216,12 +223,12 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
             let col_call = Ident::new(&format!("col{}", i), Span::call_site().into());
 
             quote! {
-                let #col_call = #func2([ #(#idx),*]);
+                let #col_call = #func1([ #(#idx),*]);
             }
         });
 
         let combine = (0..s).map(|i| {
-            let col = i % c1;
+            let col = i % c2;
             let idx = i / c2;
             let f = Ident::new(&format!("col{}", col), Span::call_site().into());
             quote! {
