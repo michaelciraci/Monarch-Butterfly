@@ -138,7 +138,7 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[inline]
-            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+            fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
@@ -164,7 +164,7 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         #[inline]
-        pub fn fft1<T: Float>(x: [Complex<T>; 1]) -> [Complex<T>; 1] {
+        fn fft1<T: Float>(x: [Complex<T>; 1]) -> [Complex<T>; 1] {
             x
         }
 
@@ -226,7 +226,7 @@ pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[inline]
-            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+            fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
@@ -310,7 +310,7 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[inline]
-            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+            fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
@@ -491,7 +491,7 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[inline]
-            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+            fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());

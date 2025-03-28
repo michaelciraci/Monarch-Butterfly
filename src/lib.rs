@@ -22,8 +22,8 @@
 //! use num_complex::Complex;
 //!
 //! let input: Vec<_> = (0..8).map(|i| Complex::new(i as f32, 0.0)).collect();
-//! let output_slice = fft8(&input);
-//! let output_vec = fft8(input);
+//! let output_slice = fft::<8, _, _>(&input);
+//! let output_vec = fft::<8, _, _>(input);
 //! ```
 
 #![allow(clippy::excessive_precision)]
@@ -49,7 +49,7 @@ fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Comp
 }
 
 #[inline]
-pub fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 3] {
+fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 3] {
     let n = 3;
     let x = input.as_ref();
     assert_eq!(n, x.len());
@@ -74,7 +74,7 @@ pub fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex
 }
 
 #[inline]
-pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 9] {
+fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 9] {
     let n = 9;
     let x = input.as_ref();
     assert_eq!(n, x.len());
@@ -106,7 +106,7 @@ pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex
 }
 
 #[inline]
-pub fn fft18<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 18] {
+fn fft18<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 18] {
     let n = 18;
     let x = input.as_ref();
     assert_eq!(n, x.len());
@@ -175,7 +175,7 @@ pub fn fft18<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
 }
 
 #[inline]
-pub fn fft27<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 27] {
+fn fft27<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 27] {
     let n = 27;
     let x = input.as_ref();
     assert_eq!(n, x.len());
