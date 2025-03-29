@@ -715,22 +715,6 @@ pub fn fft125<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Compl
         T::from(0.9936113105200084).unwrap(),
     );
 
-    // let mut cross_fft_len = 5;
-
-    // let mut twiddle = vec![];
-
-    // for factor in [5, 5] {
-    //     let cross_fft_columns = cross_fft_len;
-    //     cross_fft_len *= factor;
-
-    //     for i in 0..cross_fft_columns {
-    //         for k in 1..factor {
-    //             let twiddle: Complex<T> = _compute_twiddle(i * k, cross_fft_len);
-    //             twiddle.push(twiddle);
-    //         }
-    //     }
-    // }
-
     let row0 = fft5([x[0], x[25], x[50], x[75], x[100]]);
     let row1 = fft5([x[5], x[30], x[55], x[80], x[105]]);
     let row2 = fft5([x[10], x[35], x[60], x[85], x[110]]);
@@ -742,7 +726,7 @@ pub fn fft125<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Compl
     let row8 = fft5([x[16], x[41], x[66], x[91], x[116]]);
     let row9 = fft5([x[21], x[46], x[71], x[96], x[121]]);
 
-    let row10 = fft5([x[2 + 0], x[2 + 25], x[2 + 50], x[2 + 75], x[2 + 100]]);
+    let row10 = fft5([x[2], x[2 + 25], x[2 + 50], x[2 + 75], x[2 + 100]]);
     let row11 = fft5([x[2 + 5], x[2 + 30], x[2 + 55], x[2 + 80], x[2 + 105]]);
     let row12 = fft5([x[2 + 10], x[2 + 35], x[2 + 60], x[2 + 85], x[2 + 110]]);
     let row13 = fft5([x[2 + 15], x[2 + 40], x[2 + 65], x[2 + 90], x[2 + 115]]);
@@ -753,7 +737,7 @@ pub fn fft125<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Compl
     let row18 = fft5([x[2 + 16], x[2 + 41], x[2 + 66], x[2 + 91], x[2 + 116]]);
     let row19 = fft5([x[2 + 21], x[2 + 46], x[2 + 71], x[2 + 96], x[2 + 121]]);
 
-    let row20 = fft5([x[4 + 0], x[4 + 25], x[4 + 50], x[4 + 75], x[4 + 100]]);
+    let row20 = fft5([x[4], x[4 + 25], x[4 + 50], x[4 + 75], x[4 + 100]]);
     let row21 = fft5([x[4 + 5], x[4 + 30], x[4 + 55], x[4 + 80], x[4 + 105]]);
     let row22 = fft5([x[4 + 10], x[4 + 35], x[4 + 60], x[4 + 85], x[4 + 110]]);
     let row23 = fft5([x[4 + 15], x[4 + 40], x[4 + 65], x[4 + 90], x[4 + 115]]);
