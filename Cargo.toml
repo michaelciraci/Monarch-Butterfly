@@ -7,7 +7,7 @@ license = "MIT"
 documentation = "https://docs.rs/monarch-butterfly"
 homepage = "https://github.com/michaelciraci/Monarch-Butterfly"
 repository = "https://github.com/michaelciraci/Monarch-Butterfly"
-rust-version = "1.61"
+rust-version = "1.63"
 
 [dependencies]
 monarch-derive = { path = "crates/monarch-derive" }
