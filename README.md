@@ -1,14 +1,34 @@
-## Monarch Butterfly
+[![Build](https://github.com/michaelciraci/Monarch-Butterfly/actions/workflows/rust.yml/badge.svg)](https://github.com/michaelciraci/Monarch-Butterfly/actions/workflows/rust.yml)
+[![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
+[![](https://img.shields.io/crates/v/monarch-butterfly)](https://img.shields.io/crates/v/monarch-butterfly)
+[![](https://docs.rs/monarch-butterfly/badge.svg)](https://docs.rs/monarch-butterfly/)
 
-Experimental FFT library with an emphasis on runtime performance.
-The goal of this library is to hand-unroll all loops in a procedural macro
-for optimal SIMD throughput.
+# Monarch Butterfly
 
-This currently only works on powers of two.
+Experimental FFT library where all FFTs are proc-macro generated const-evaluation functions. The use case is if you know the FFT size at compile time. However, knowing the FFT size at compile time gives immense gains.
 
-This library implements FFTs for both `f32` and `f64` for the following sizes:
+This library implements FFTs for both `f32` and `f64` sizes `1-200`. The FFTs are auto-generated so this limit could be increased above 200 at the expense of compile time.
+
+## Features
+
+- All functions are auto-generated with proc-macros with unrolled loops
+- Zero `unsafe` code
+- Completely portable
+- Const-evaluation functions
+
+## Limitations
+
+- FFT size must be known at compile time
+- By default, only FFTs up to size 200 are generated
+
+![log](assets/log_comparison.png)
+
 ```
-1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048
+use monarch_butterfly::*;
+use num_complex::Complex;
+
+let input: Vec<_> = (0..8).map(|i| Complex::new(i as f32, 0.0)).collect();
+let output = fft::<8, _, _>(input);
 ```
 
 This library will use all SIMD features your CPU has available including AVX512,
@@ -17,20 +37,7 @@ assuming you compile with those features (`RUSTFLAGS="-C target-cpu=native" carg
 The larger the FFT sizes, the larger speed boost this library will give you.
 
 As an example of AVX512 instructions, here is an example on just an FFT
-of size 128: https://godbolt.org/z/rz48azEsd (`Ctrl+F` for "zmm" instructions)
-
-If a larger FFT size is needed, just clone the repo and add the needed
-sizes to the top of `crates\monarch-derive\src\lib.rs` and larger FFTs
-will be generated. However, this comes at the cost of a longer compile time.
-
-```
-use monarch_butterfly::*;
-use num_complex::Complex;
-
-let input: Vec<_> = (0..8).map(|i| Complex::new(i as f32, 0.0)).collect();
-let output_slice = fft8(&input);
-let output_vec = fft8(input);
-```
+of size 128: https://godbolt.org/z/Y58eh1x5a(`Ctrl+F` for "zmm" instructions)
 
 The FFTs before unrolling are heavily inspired from [RustFFT](https://github.com/ejmahler/RustFFT).
 Credit is given to Elliott Mahler as the RustFFT original author.
