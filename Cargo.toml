@@ -10,7 +10,7 @@ repository = "https://github.com/michaelciraci/Monarch-Butterfly"
 rust-version = "1.63"
 
 [dependencies]
-monarch-derive = { path = "crates/monarch-derive" }
+monarch-derive = "=0.3.0"
 num-complex = "0.4"
 num-traits = "0.2"
 
