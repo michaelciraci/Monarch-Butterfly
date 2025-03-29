@@ -47,7 +47,7 @@ This library will use all SIMD features your CPU has, assuming `rustc` can compi
 The larger the FFT sizes, the larger speed boost this library will give you.
 
 As an example of AVX512 instructions, here is an example on just an FFT
-of size 128: https://godbolt.org/z/Y58eh1x5a(`Ctrl+F` for "zmm" instructions)
+of size 128: https://godbolt.org/z/Y58eh1x5a (`Ctrl+F` for "zmm" instructions)
 
 The FFTs before unrolling are heavily inspired from [RustFFT](https://github.com/ejmahler/RustFFT).
 Credit is given to Elliott Mahler as the RustFFT original author.
