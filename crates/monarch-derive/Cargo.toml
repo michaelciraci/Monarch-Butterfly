@@ -1,8 +1,8 @@
 [package]
 name = "monarch-derive"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
-description = "FFTs for powers of 2"
+description = "Proc-Macro unrolled FFTs"
 license = "MIT"
 documentation = "https://docs.rs/monarch-derive"
 homepage = "https://github.com/michaelciraci/Monarch-Butterfly/tree/main/crates/monarch-derive"

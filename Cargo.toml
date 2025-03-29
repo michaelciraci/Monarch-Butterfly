@@ -2,7 +2,7 @@
 name = "monarch-butterfly"
 version = "0.2.0"
 edition = "2021"
-description = "FFTs for powers of 2"
+description = "Proc-Macro unrolled FFTs"
 license = "MIT"
 documentation = "https://docs.rs/monarch-butterfly"
 homepage = "https://github.com/michaelciraci/Monarch-Butterfly"
