@@ -27,6 +27,7 @@
 //! ```
 
 #![allow(clippy::excessive_precision)]
+#![forbid(unsafe_code)]
 
 use num_complex::Complex;
 use num_traits::{Float, FloatConst};
