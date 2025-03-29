@@ -1,6 +1,6 @@
 [package]
 name = "monarch-butterfly"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 description = "Proc-Macro unrolled FFTs"
 license = "MIT"
@@ -8,6 +8,8 @@ documentation = "https://docs.rs/monarch-butterfly"
 homepage = "https://github.com/michaelciraci/Monarch-Butterfly"
 repository = "https://github.com/michaelciraci/Monarch-Butterfly"
 rust-version = "1.63"
+keywords = ["fft", "dft", "discrete", "fourier", "transform"]
+categories = ["algorithms", "science"]
 
 [dependencies]
 monarch-derive = "=0.3.0"
