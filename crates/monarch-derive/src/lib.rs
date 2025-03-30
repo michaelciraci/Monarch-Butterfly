@@ -89,7 +89,7 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
         quote! {
             #s => {
                 let x = #func(x_in);
-                std::array::from_fn(|i| x[i])
+                core::array::from_fn(|i| x[i])
              },
         }
     });
@@ -99,7 +99,7 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
         quote! {
             #s => {
                 let x = #func(x_in);
-                std::array::from_fn(|i| x[i])
+                core::array::from_fn(|i| x[i])
              },
         }
     });
@@ -120,7 +120,7 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
             assert_eq!(x_in.len(), N);
 
             match N {
-                1 => { std::array::from_fn(|i| x_in[i]) },
+                1 => { core::array::from_fn(|i| x_in[i]) },
                 #(#ss_forward)*
                 _ => unimplemented!(),
             }
@@ -141,7 +141,7 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
             assert_eq!(x_in.len(), N);
 
             match N {
-                1 => { std::array::from_fn(|i| x_in[i]) },
+                1 => { core::array::from_fn(|i| x_in[i]) },
                 #(#ss_inverse)*
                 _ => unimplemented!(),
             }
