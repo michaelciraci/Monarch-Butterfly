@@ -8,7 +8,7 @@ documentation = "https://docs.rs/monarch-butterfly"
 homepage = "https://github.com/michaelciraci/Monarch-Butterfly"
 repository = "https://github.com/michaelciraci/Monarch-Butterfly"
 rust-version = "1.63"
-keywords = ["fft", "dft", "discrete", "fourier", "transform", "no_std"]
+keywords = ["fft", "dft", "discrete", "fourier", "no_std"]
 categories = ["algorithms", "science"]
 
 [dependencies]

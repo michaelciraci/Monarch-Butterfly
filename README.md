@@ -16,6 +16,7 @@ This library implements FFTs for both `f32` and `f64` sizes `1-200`. The FFTs ar
 
 - All functions are auto-generated with proc-macros with unrolled loops
 - Zero `unsafe` code
+- no_std
 - Completely portable
 - Const-evaluation functions
 
