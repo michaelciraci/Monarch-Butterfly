@@ -1,6 +1,6 @@
 [package]
 name = "monarch-derive"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 description = "Proc-Macro unrolled FFTs"
 license = "MIT"
