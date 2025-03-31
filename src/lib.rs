@@ -73,7 +73,7 @@ fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Comp
 }
 
 #[doc = concat!("Inner FFT")]
-#[inline]
+#[inline(always)]
 pub fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 3] {
     let n = 3;
     let x = input.as_ref();
@@ -99,7 +99,7 @@ pub fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex
 }
 
 #[doc = concat!("Inner FFT")]
-#[inline]
+#[inline(always)]
 pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 9] {
     let n = 9;
     let x = input.as_ref();
@@ -132,7 +132,7 @@ pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex
 }
 
 #[doc = concat!("Inner FFT")]
-#[inline]
+#[inline(always)]
 pub fn fft18<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 18] {
     let n = 18;
     let x = input.as_ref();
@@ -202,7 +202,7 @@ pub fn fft18<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
 }
 
 #[doc = concat!("Inner FFT")]
-#[inline]
+#[inline(always)]
 pub fn fft27<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 27] {
     let n = 27;
     let x = input.as_ref();
@@ -279,7 +279,7 @@ pub fn fft27<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
 }
 
 #[doc = concat!("Inner FFT")]
-#[inline]
+#[inline(always)]
 pub fn fft125<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 125] {
     let n = 125;
     let x = input.as_ref();
