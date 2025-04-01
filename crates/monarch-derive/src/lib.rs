@@ -114,7 +114,7 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
         /// let input: Vec<_> = (0..8).map(|i| Complex::new(i as f32, 0.0)).collect();
         /// let output = fft::<8, _, _>(input);
         /// ```
-        #[inline]
+        #[inline(always)]
         pub fn fft<const N: usize, T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; N] {
             let x_in = input.as_ref();
             assert_eq!(x_in.len(), N);
@@ -135,7 +135,7 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
         /// let input: Vec<_> = (0..8).map(|i| Complex::new(i as f32, 0.0)).collect();
         /// let output = ifft::<8, _, _>(input);
         /// ```
-        #[inline]
+        #[inline(always)]
         pub fn ifft<const N: usize, T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; N] {
             let x_in = input.as_ref();
             assert_eq!(x_in.len(), N);
@@ -187,7 +187,7 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[doc = concat!("Inner FFT")]
-            #[inline]
+            #[inline(always)]
             pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
                 let n = #s;
                 let x = input.as_ref();
@@ -214,7 +214,7 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         
-        #[inline]
+        #[inline(always)]
         pub fn fft1<T: Float, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 1] {
             let n = 1;
             let x = input.as_ref();
@@ -281,7 +281,7 @@ pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[doc = concat!("Inner FFT")]
-            #[inline]
+            #[inline(always)]
             pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
                 let n = #s;
                 let x = input.as_ref();
@@ -366,7 +366,7 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[doc = concat!("Inner FFT")]
-            #[inline]
+            #[inline(always)]
             pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
                 let n = #s;
                 let x = input.as_ref();
@@ -548,7 +548,7 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[doc = concat!("Inner FFT")]
-            #[inline]
+            #[inline(always)]
             pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
                 let n = #s;
                 let x = input.as_ref();
@@ -603,7 +603,7 @@ pub fn generate_iffts(_input: TokenStream) -> TokenStream {
 
         quote! {
             #[doc = concat!("Inner iFFT")]
-            #[inline]
+            #[inline(always)]
             pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #n] {
                 let x = input.as_ref();
                 assert_eq!(x.len(), #n);
@@ -621,7 +621,7 @@ pub fn generate_iffts(_input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         #[doc = concat!("Inner iFFT")]
-        #[inline]
+        #[inline(always)]
         pub fn ifft1<T: Float, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 1] {
             let n = 1;
             let x = input.as_ref();

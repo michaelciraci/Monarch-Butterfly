@@ -1,6 +1,6 @@
 [![Build](https://github.com/michaelciraci/Monarch-Butterfly/actions/workflows/rust.yml/badge.svg)](https://github.com/michaelciraci/Monarch-Butterfly/actions/workflows/rust.yml)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
-[![](https://img.shields.io/crates/v/monarch-butterfly)](https://img.shields.io/crates/v/monarch-butterfly)
+[![](https://img.shields.io/crates/v/monarch-butterfly)](https://crates.io/crates/monarch-butterfly)
 [![](https://docs.rs/monarch-butterfly/badge.svg)](https://docs.rs/monarch-butterfly/)
 
 # Monarch Butterfly
