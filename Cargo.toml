@@ -10,6 +10,7 @@ repository = "https://github.com/michaelciraci/Monarch-Butterfly"
 rust-version = "1.63"
 keywords = ["fft", "dft", "discrete", "fourier", "no_std"]
 categories = ["algorithms", "science"]
+exclude = ["assets/", ".*"]
 
 [dependencies]
 monarch-derive = { path = "crates/monarch-derive" }
