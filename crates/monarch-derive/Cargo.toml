@@ -1,6 +1,6 @@
 [package]
 name = "monarch-derive"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 description = "Proc-Macro unrolled FFTs"
 license = "MIT"
@@ -15,6 +15,6 @@ proc-macro = true
 [dependencies]
 quote = "1.0.40"
 syn = "2.0.100"
-num-complex = "0.4"
-num-traits = "0.2"
+num-complex = { version = "0.4", default-features = false, features = ["libm"] }
+num-traits = { version = "0.2", default-features = false, features = ["libm"] }
 num-integer = "0.1"
