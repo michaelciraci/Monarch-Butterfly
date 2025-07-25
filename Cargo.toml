@@ -7,15 +7,15 @@ license = "MIT"
 documentation = "https://docs.rs/monarch-butterfly"
 homepage = "https://github.com/michaelciraci/Monarch-Butterfly"
 repository = "https://github.com/michaelciraci/Monarch-Butterfly"
-rust-version = "1.63"
+rust-version = "1.85"
 keywords = ["fft", "dft", "discrete", "fourier", "no_std"]
 categories = ["algorithms", "science"]
 exclude = ["assets/", ".*"]
 
 [dependencies]
-monarch-derive = { path = "crates/monarch-derive" }
 num-complex = { version = "0.4", default-features = false, features = ["libm"] }
 num-traits = { version = "0.2", default-features = false, features = ["libm"] }
+trig-const = "0.1.1"
 
 [dev-dependencies]
 rustfft = "6.2.0"
