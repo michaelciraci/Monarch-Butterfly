@@ -1,5 +1,4 @@
 #![doc = include_str!("../README.md")]
-
 #![allow(clippy::excessive_precision)]
 #![forbid(unsafe_code)]
 #![no_std]
@@ -12,10 +11,10 @@ const SQRT_3_DIV_2: f64 = SQRT_3 / 2.0;
 
 monarch_derive::generate_switch!();
 monarch_derive::generate_powers_of_two!();
-monarch_derive::generate_coprimes!();
-monarch_derive::generate_mixed_radix!();
-monarch_derive::generate_primes!();
-monarch_derive::generate_iffts!();
+// monarch_derive::generate_coprimes!();
+// monarch_derive::generate_mixed_radix!();
+// monarch_derive::generate_primes!();
+// monarch_derive::generate_iffts!();
 
 fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
     let constant = T::from(-2.0).unwrap() * T::PI() / T::from(fft_len).unwrap();
@@ -27,10 +26,11 @@ fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Comp
 
 #[doc = concat!("Inner FFT")]
 #[inline(always)]
-pub fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 3] {
+pub fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
     let n = 3;
     let x = input.as_ref();
     assert_eq!(n, x.len());
+    assert_eq!(n, output.len());
 
     let twiddle: Complex<T> = Complex::new(T::from(-0.5).unwrap(), -T::from(SQRT_3_DIV_2).unwrap());
 
@@ -48,12 +48,17 @@ pub fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex
         im: twiddle.im * xn.re,
     };
 
-    [sum, temp_a + temp_b, temp_a - temp_b]
+    output[0] = sum;
+    output[1] = temp_a + temp_b;
+    output[2] = temp_a - temp_b;
 }
 
 #[doc = concat!("Inner FFT")]
 #[inline(always)]
-pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 9] {
+pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(
+    input: A,
+    output: &mut [Complex<T>],
+){
     let n = 9;
     let x = input.as_ref();
     assert_eq!(n, x.len());
@@ -71,19 +76,39 @@ pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex
         T::from(-0.34202014332566888).unwrap(),
     );
 
-    let first = fft3([x[0], x[3], x[6]]);
-    let second = fft3([x[1], x[4], x[7]]);
-    let third = fft3([x[2], x[5], x[8]]);
+    let mut first = [Complex::new(T::zero(), T::zero()); 3];
+    let mut second = [Complex::new(T::zero(), T::zero()); 3];
+    let mut third = [Complex::new(T::zero(), T::zero()); 3];
 
-    let row0 = fft3([first[0], second[0], third[0]]);
-    let row1 = fft3([first[1], second[1] * twiddle1, third[1] * twiddle2]);
-    let row2 = fft3([first[2], second[2] * twiddle2, third[2] * twiddle4]);
+    fft3([x[0], x[3], x[6]], first.as_mut_slice());
+    fft3([x[1], x[4], x[7]], second.as_mut_slice());
+    fft3([x[2], x[5], x[8]], third.as_mut_slice());
 
-    [
-        row0[0], row1[0], row2[0], row0[1], row1[1], row2[1], row0[2], row1[2], row2[2],
-    ]
+    let mut row0 = [Complex::new(T::zero(), T::zero()); 3];
+    let mut row1 = [Complex::new(T::zero(), T::zero()); 3];
+    let mut row2 = [Complex::new(T::zero(), T::zero()); 3];
+
+    fft3([first[0], second[0], third[0]], row0.as_mut_slice());
+    fft3(
+        [first[1], second[1] * twiddle1, third[1] * twiddle2],
+        row1.as_mut_slice(),
+    );
+    fft3(
+        [first[2], second[2] * twiddle2, third[2] * twiddle4],
+        row2.as_mut_slice(),
+    );
+
+    output[0] = row0[0];
+    output[1] = row1[0];
+    output[2] = row2[0];
+    output[3] = row0[1];
+    output[4] = row1[1];
+    output[5] = row2[1];
+    output[6] = row0[2];
+    output[7] = row1[2];
+    output[8] = row2[2];
 }
-
+/*
 #[doc = concat!("Inner FFT")]
 #[inline(always)]
 pub fn fft18<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 18] {
@@ -137,9 +162,13 @@ pub fn fft18<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
         T::from(0.34202014332566866).unwrap(),
     );
 
-    let row0 = fft6([x[0], x[3], x[6], x[9], x[12], x[15]]);
-    let row1 = fft6([x[1], x[4], x[7], x[10], x[13], x[16]]);
-    let row2 = fft6([x[2], x[5], x[8], x[11], x[14], x[17]]);
+    let mut row0 = [Complex::new(T::zero(), T::zero()); 6];
+    let mut row1 = [Complex::new(T::zero(), T::zero()); 6];
+    let mut row2 = [Complex::new(T::zero(), T::zero()); 6];
+
+    fft6([x[0], x[3], x[6], x[9], x[12], x[15]], row0.as_mut_slice());
+    fft6([x[1], x[4], x[7], x[10], x[13], x[16]], row1.as_mut_slice());
+    fft6([x[2], x[5], x[8], x[11], x[14], x[17]], row2.as_mut_slice());
 
     let col0 = fft3([row0[0] * twiddle0, row1[0] * twiddle6, row2[0] * twiddle12]);
     let col1 = fft3([row0[1] * twiddle1, row1[1] * twiddle7, row2[1] * twiddle13]);
@@ -1100,7 +1129,7 @@ pub fn fft125<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Compl
         row20[4], row21[4], row22[4], row23[4], row24[4],
     ]
 }
-
+*/
 // #[cfg(test)]
 // mod tests {
 //     use num_complex::Complex;

@@ -9,20 +9,22 @@ use proc_macro::{Span, TokenStream};
 use quote::quote;
 use syn::Ident;
 
-const SIZES: [usize; 194] = [
-    2, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30,
-    31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
-    55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
-    79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101,
-    102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
-    121, 122, 123, 124, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
-    141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
-    160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178,
-    179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197,
-    198, 199, 200,
-];
+// const SIZES: [usize; 194] = [
+//     2, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30,
+//     31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
+//     55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+//     79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101,
+//     102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
+//     121, 122, 123, 124, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+//     141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
+//     160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178,
+//     179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197,
+//     198, 199, 200,
+// ];
 
-const HAND_GEN: [usize; 5] = [3, 9, 18, 27, 125];
+const SIZES: [usize; 5] = [2, 4, 8, 16, 32];
+
+const HAND_GEN: [usize; 0] = [];
 
 #[derive(PartialEq, Debug)]
 enum FFTType {
@@ -88,21 +90,20 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
 
         quote! {
             #s => {
-                let x = #func(x_in);
-                core::array::from_fn(|i| x[i])
+                #func(x_in, output);
              },
         }
     });
-    let ss_inverse = all_sizes.into_iter().map(|s| {
-        let func = Ident::new(&format!("ifft{}", s), Span::call_site().into());
+    // let ss_inverse = all_sizes.into_iter().map(|s| {
+    //     let func = Ident::new(&format!("ifft{}", s), Span::call_site().into());
 
-        quote! {
-            #s => {
-                let x = #func(x_in);
-                core::array::from_fn(|i| x[i])
-             },
-        }
-    });
+    //     quote! {
+    //         #s => {
+    //             let x = #func(x_in);
+    //             core::array::from_fn(|i| x[i])
+    //          },
+    //     }
+    // });
 
     let expanded = quote! {
         /// Top level FFT function
@@ -111,38 +112,19 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
         /// use monarch_butterfly::*;
         /// use num_complex::Complex;
         /// 
+        /// let mut output = vec![Complex::new(0.0, 0.0); 8];
         /// let input: Vec<_> = (0..8).map(|i| Complex::new(i as f32, 0.0)).collect();
-        /// let output = fft::<8, _, _>(input);
+        /// fft::<8, _, _>(input, output.as_mut_slice());
         /// ```
         #[inline(always)]
-        pub fn fft<const N: usize, T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; N] {
+        pub fn fft<const N: usize, T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
             let x_in = input.as_ref();
             assert_eq!(x_in.len(), N);
+            assert_eq!(output.len(), N);
 
             match N {
-                1 => { core::array::from_fn(|i| x_in[i]) },
+                1 => { output[0] = x_in[0]; },
                 #(#ss_forward)*
-                _ => unimplemented!(),
-            }
-        }
-
-         /// Top level iFFT function
-        /// 
-        /// ```
-        /// use monarch_butterfly::*;
-        /// use num_complex::Complex;
-        /// 
-        /// let input: Vec<_> = (0..8).map(|i| Complex::new(i as f32, 0.0)).collect();
-        /// let output = ifft::<8, _, _>(input);
-        /// ```
-        #[inline(always)]
-        pub fn ifft<const N: usize, T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; N] {
-            let x_in = input.as_ref();
-            assert_eq!(x_in.len(), N);
-
-            match N {
-                1 => { core::array::from_fn(|i| x_in[i]) },
-                #(#ss_inverse)*
                 _ => unimplemented!(),
             }
         }
@@ -184,30 +166,38 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
         let sub_halves = (0..half).map(|t_o| quote! {
             even[#t_o] - t[#t_o],
         });
+        let copy_out = (0..s).map(|x| quote!{
+            output[#x] = final_out[#x];
+        });
 
         quote! {
             #[doc = concat!("Inner FFT")]
             #[inline(always)]
-            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
 
-                let even: [Complex<T>; #half] = #half_butterfly([
-                    #(#half_butterfly_even_idx)*
-                ]);
-                let odd: [Complex<T>; #half] = #half_butterfly([
-                    #(#half_butterfly_odd_idx)*
-                ]);
+                let mut even: [Complex<T>; #half] = [Complex::<T>::new(T::zero(), T::zero()); #half];
+                let mut odd: [Complex<T>; #half] = [Complex::<T>::new(T::zero(), T::zero()); #half];
+                // let even: [Complex<T>; #half] = #half_butterfly([
+                //     #(#half_butterfly_even_idx)*
+                // ]);
+                // let odd: [Complex<T>; #half] = #half_butterfly([
+                //     #(#half_butterfly_odd_idx)*
+                // ]);
+                #half_butterfly([#(#half_butterfly_even_idx)*], even.as_mut_slice());
+                #half_butterfly([#(#half_butterfly_odd_idx)*], odd.as_mut_slice());
 
                 let t: [Complex<T>; #half] = [
                     #(#t_s),*
                 ];
 
-                [
+                let final_out = [
                     #(#sum_halves)*
                     #(#sub_halves)*
-                ]
+                ];
+                #(#copy_out)*
             }
         }
     });
@@ -215,12 +205,13 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
     let expanded = quote! {
         
         #[inline(always)]
-        pub fn fft1<T: Float, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 1] {
+        pub fn fft1<T: Float, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
             let n = 1;
             let x = input.as_ref();
             assert_eq!(n, x.len());
+            assert_eq!(n, output.len());
 
-            [x[0]]
+            output[0] = x[0];
         }
 
         #(#ss)*
@@ -282,10 +273,11 @@ pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
         quote! {
             #[doc = concat!("Inner FFT")]
             #[inline(always)]
-            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
+                assert_eq!(x, output.len());
 
                 #(#rows)*
                 #(#cols)*

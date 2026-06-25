@@ -39,8 +39,9 @@ The top level functions are `fft` and `ifft`.
 use monarch_butterfly::*;
 use num_complex::Complex;
 
+let mut output = vec![Complex::new(0.0, 0.0); 8];
 let input: Vec<_> = (0..8).map(|i| Complex::new(i as f32, 0.0)).collect();
-let output = fft::<8, _, _>(input);
+fft::<8, _, _>(input, output.as_mut_slice());
 ```
 
 This library will use all SIMD features your CPU has, assuming `rustc` can compile to those SIMD features.
