@@ -22,7 +22,7 @@ use syn::Ident;
 //     198, 199, 200,
 // ];
 
-const SIZES: [usize; 9] = [2, 4, 5, 6, 7, 8, 11, 16, 32];
+const SIZES: [usize; 26] = [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28, 32];
 
 const HAND_GEN: [usize; 1] = [3];
 
@@ -320,7 +320,8 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
             let row_call = Ident::new(&format!("row{}", i), Span::call_site().into());
 
             quote! {
-                let #row_call = #func2([ #(#idx)* ]);
+                let mut #row_call: [Complex<T>; #c1] = [Complex::<T>::new(T::zero(), T::zero()); #c1];
+                #func2([ #(#idx)* ], #row_call.as_mut_slice());
         }});
 
         let mut twiddles = vec![Complex::<f64>::new(0.0, 0.0); s];
@@ -345,7 +346,8 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
             let col_call = Ident::new(&format!("col{}", i), Span::call_site().into());
 
             quote! {
-                let #col_call = #func1([ #(#idx),*]);
+                let mut #col_call: [Complex<T>; #c2] = [Complex::<T>::new(T::zero(), T::zero()); #c2];
+                #func1([ #(#idx),*], #col_call.as_mut_slice());
             }
         });
 
@@ -354,23 +356,24 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
             let idx = i / c2;
             let f = Ident::new(&format!("col{}", col), Span::call_site().into());
             quote! {
-                #f[#idx],
+                output[#i] = #f[#idx];
             }
         });
 
         quote! {
             #[doc = concat!("Inner FFT")]
             #[inline(always)]
-            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
+                assert_eq!(n, output.len());
 
                 #(#rows)*
                 #(#cols)*
 
 
-                [#(#combine)*]
+                #(#combine)*
 
             }
         }
