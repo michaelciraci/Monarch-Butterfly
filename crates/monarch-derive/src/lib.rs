@@ -22,7 +22,7 @@ use syn::Ident;
 //     198, 199, 200,
 // ];
 
-const SIZES: [usize; 6] = [2, 4, 6, 8, 16, 32];
+const SIZES: [usize; 9] = [2, 4, 5, 6, 7, 8, 11, 16, 32];
 
 const HAND_GEN: [usize; 1] = [3];
 
@@ -536,32 +536,31 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
             let var_re: Ident = Ident::new(&format!("out{}re", n), Span::call_site().into());
             let var_im: Ident = Ident::new(&format!("out{}im", n), Span::call_site().into());
             quote! {
-                Complex::new(#var_re, #var_im),
+                output[#n] = Complex::new(#var_re, #var_im);
             }
         });
 
         quote! {
             #[doc = concat!("Inner FFT")]
             #[inline(always)]
-            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; #s] {
+            pub fn #func<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
+                assert_eq!(n, output.len());
 
                 #(#twiddles)*
 
                 #(#first_codegen)*
-                let sum = x[0] #(#second_codegen)* ;
+                
                 #(#third_codegen)*
                 #(#fourth_codegen)*
                 #(#fifth_codegen)*
                 #(#sixth_codegen)*
                 #(#seventh_codegen)*
 
-                [
-                    sum,
-                    #(#eigth_codegen)*
-                ]
+                output[0] = x[0] #(#second_codegen)* ;
+                #(#eigth_codegen)*
             }
 
     }});
