@@ -11,7 +11,7 @@ const SQRT_3_DIV_2: f64 = SQRT_3 / 2.0;
 
 monarch_derive::generate_switch!();
 monarch_derive::generate_powers_of_two!();
-// monarch_derive::generate_coprimes!();
+monarch_derive::generate_coprimes!();
 // monarch_derive::generate_mixed_radix!();
 // monarch_derive::generate_primes!();
 // monarch_derive::generate_iffts!();
@@ -55,13 +55,11 @@ pub fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mu
 
 #[doc = concat!("Inner FFT")]
 #[inline(always)]
-pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(
-    input: A,
-    output: &mut [Complex<T>],
-){
+pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
     let n = 9;
     let x = input.as_ref();
     assert_eq!(n, x.len());
+    assert_eq!(n, output.len());
 
     let twiddle1: Complex<T> = Complex::new(
         T::from(0.76604444311897801).unwrap(),
@@ -111,7 +109,7 @@ pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(
 /*
 #[doc = concat!("Inner FFT")]
 #[inline(always)]
-pub fn fft18<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 18] {
+pub fn fft18<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
     let n = 18;
     let x = input.as_ref();
     assert_eq!(n, x.len());
@@ -177,10 +175,10 @@ pub fn fft18<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Comple
     let col4 = fft3([row0[4] * twiddle4, row1[4] * twiddle10, row2[4] * twiddle16]);
     let col5 = fft3([row0[5] * twiddle5, row1[5] * twiddle11, row2[5] * twiddle17]);
 
-    [
-        col0[0], col1[0], col2[0], col3[0], col4[0], col5[0], col0[1], col1[1], col2[1], col3[1],
-        col4[1], col5[1], col0[2], col1[2], col2[2], col3[2], col4[2], col5[2],
-    ]
+    // [
+    //     col0[0], col1[0], col2[0], col3[0], col4[0], col5[0], col0[1], col1[1], col2[1], col3[1],
+    //     col4[1], col5[1], col0[2], col1[2], col2[2], col3[2], col4[2], col5[2],
+    // ]
 }
 
 #[doc = concat!("Inner FFT")]

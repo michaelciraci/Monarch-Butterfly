@@ -47,10 +47,10 @@ macro_rules! compare_against_rustfft {
 
 compare_against_rustfft!(forward_1, 1);
 compare_against_rustfft!(forward_2, 2);
-// compare_against_rustfft!(forward_3, 3);
+compare_against_rustfft!(forward_3, 3);
 compare_against_rustfft!(forward_4, 4);
 // compare_against_rustfft!(forward_5, 5);
-// compare_against_rustfft!(forward_6, 6);
+compare_against_rustfft!(forward_6, 6);
 // compare_against_rustfft!(forward_7, 7);
 compare_against_rustfft!(forward_8, 8);
 // compare_against_rustfft!(forward_9, 9);

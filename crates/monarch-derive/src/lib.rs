@@ -22,9 +22,9 @@ use syn::Ident;
 //     198, 199, 200,
 // ];
 
-const SIZES: [usize; 5] = [2, 4, 8, 16, 32];
+const SIZES: [usize; 6] = [2, 4, 6, 8, 16, 32];
 
-const HAND_GEN: [usize; 0] = [];
+const HAND_GEN: [usize; 1] = [3];
 
 #[derive(PartialEq, Debug)]
 enum FFTType {
@@ -243,7 +243,8 @@ pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
             let row_call = Ident::new(&format!("row{}", i), Span::call_site().into());
 
             quote! {
-                let #row_call = #func1([ #(#idx)* ]);
+                let mut #row_call : [Complex<T>; #c1] = [Complex::<T>::new(T::zero(), T::zero()); #c1];
+                #func1([ #(#idx)* ], #row_call.as_mut_slice());
         }});
 
         let cols = (0..c1).map(|i| {
@@ -257,7 +258,8 @@ pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
             let col_call = Ident::new(&format!("col{}", i), Span::call_site().into());
 
             quote! {
-                let #col_call = #func2([ #(#idx),*]);
+                let mut #col_call: [Complex<T>; #c2] = [Complex::<T>::new(T::zero(), T::zero()); #c2];
+                #func2([ #(#idx),*], #col_call.as_mut_slice());
             }
         });
 
@@ -266,7 +268,7 @@ pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
             let idx = i % c2;
             let f = Ident::new(&format!("col{}", col), Span::call_site().into());
             quote! {
-                #f[#idx],
+                output[#i] = #f[#idx];
             }
         });
 
@@ -277,13 +279,13 @@ pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
-                assert_eq!(x, output.len());
+                assert_eq!(n, output.len());
 
                 #(#rows)*
                 #(#cols)*
 
 
-                [#(#combine)*]
+                #(#combine)*;
 
             }
         }
