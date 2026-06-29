@@ -53,13 +53,159 @@ pub fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mu
     output[2] = temp_a - temp_b;
 }
 
-/*
 #[doc = concat!("Inner FFT")]
 #[inline(always)]
-pub fn fft125<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 125] {
+pub fn fft27<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
+    let n = 27;
+    let x = input.as_ref();
+    assert_eq!(n, x.len());
+    assert_eq!(n, output.len());
+
+    let mut row0: [Complex<T>; 9] = [Complex::new(T::zero(), T::zero()); 9];
+    let mut row1: [Complex<T>; 9] = [Complex::new(T::zero(), T::zero()); 9];
+    let mut row2: [Complex<T>; 9] = [Complex::new(T::zero(), T::zero()); 9];
+
+    fft9(
+        [x[0], x[3], x[6], x[9], x[12], x[15], x[18], x[21], x[24]],
+        row0.as_mut_slice(),
+    );
+    fft9(
+        [x[1], x[4], x[7], x[10], x[13], x[16], x[19], x[22], x[25]],
+        row1.as_mut_slice(),
+    );
+    fft9(
+        [x[2], x[5], x[8], x[11], x[14], x[17], x[20], x[23], x[26]],
+        row2.as_mut_slice(),
+    );
+
+    let twiddle0 = Complex::new(
+        T::from(0.97304487057982381).unwrap(),
+        T::from(-0.23061587074244017).unwrap(),
+    );
+    let twiddle1 = Complex::new(
+        T::from(0.89363264032341228).unwrap(),
+        T::from(-0.44879918020046217).unwrap(),
+    );
+    let twiddle2 = Complex::new(
+        T::from(0.76604444311897801).unwrap(),
+        T::from(-0.64278760968653925).unwrap(),
+    );
+    let twiddle3 = Complex::new(
+        T::from(0.59715859170278618).unwrap(),
+        T::from(-0.80212319275504373).unwrap(),
+    );
+    let twiddle4 = Complex::new(
+        T::from(0.3960797660391569).unwrap(),
+        T::from(-0.918216106880274).unwrap(),
+    );
+    let twiddle5 = Complex::new(
+        T::from(0.17364817766693041).unwrap(),
+        T::from(-0.98480775301220802).unwrap(),
+    );
+    let twiddle6 = Complex::new(
+        T::from(-0.058144828910475774).unwrap(),
+        T::from(-0.99830815827126817).unwrap(),
+    );
+    let twiddle7 = Complex::new(
+        T::from(-0.28680323271109021).unwrap(),
+        T::from(-0.9579895123154889).unwrap(),
+    );
+    let twiddle8 = Complex::new(
+        T::from(-0.68624163786873338).unwrap(),
+        T::from(-0.72737364157304896).unwrap(),
+    );
+    let twiddle9 = Complex::new(
+        T::from(-0.93969262078590832).unwrap(),
+        T::from(-0.34202014332566888).unwrap(),
+    );
+    let twiddle10 = Complex::new(
+        T::from(-0.99323835774194302).unwrap(),
+        T::from(0.11609291412523012).unwrap(),
+    );
+    let twiddle11 = Complex::new(
+        T::from(-0.83548781141293649).unwrap(),
+        T::from(0.54950897807080601).unwrap(),
+    );
+
+    let mut col0: [Complex<T>; 3] = [Complex::new(T::zero(), T::zero()); 3];
+    let mut col1: [Complex<T>; 3] = [Complex::new(T::zero(), T::zero()); 3];
+    let mut col2: [Complex<T>; 3] = [Complex::new(T::zero(), T::zero()); 3];
+    let mut col3: [Complex<T>; 3] = [Complex::new(T::zero(), T::zero()); 3];
+    let mut col4: [Complex<T>; 3] = [Complex::new(T::zero(), T::zero()); 3];
+    let mut col5: [Complex<T>; 3] = [Complex::new(T::zero(), T::zero()); 3];
+    let mut col6: [Complex<T>; 3] = [Complex::new(T::zero(), T::zero()); 3];
+    let mut col7: [Complex<T>; 3] = [Complex::new(T::zero(), T::zero()); 3];
+    let mut col8: [Complex<T>; 3] = [Complex::new(T::zero(), T::zero()); 3];
+    fft3([row0[0], row1[0], row2[0]], col0.as_mut_slice());
+    fft3(
+        [row0[1], row1[1] * twiddle0, row2[1] * twiddle1],
+        col1.as_mut_slice(),
+    );
+    fft3(
+        [row0[2], row1[2] * twiddle1, row2[2] * twiddle3],
+        col2.as_mut_slice(),
+    );
+    fft3(
+        [row0[3], row1[3] * twiddle2, row2[3] * twiddle5],
+        col3.as_mut_slice(),
+    );
+    fft3(
+        [row0[4], row1[4] * twiddle3, row2[4] * twiddle7],
+        col4.as_mut_slice(),
+    );
+    fft3(
+        [row0[5], row1[5] * twiddle4, row2[5] * twiddle8],
+        col5.as_mut_slice(),
+    );
+    fft3(
+        [row0[6], row1[6] * twiddle5, row2[6] * twiddle9],
+        col6.as_mut_slice(),
+    );
+    fft3(
+        [row0[7], row1[7] * twiddle6, row2[7] * twiddle10],
+        col7.as_mut_slice(),
+    );
+    fft3(
+        [row0[8], row1[8] * twiddle7, row2[8] * twiddle11],
+        col8.as_mut_slice(),
+    );
+
+    output[0] = col0[0];
+    output[1] = col1[0];
+    output[2] = col2[0];
+    output[3] = col3[0];
+    output[4] = col4[0];
+    output[5] = col5[0];
+    output[6] = col6[0];
+    output[7] = col7[0];
+    output[8] = col8[0];
+    output[9] = col0[1];
+    output[10] = col1[1];
+    output[11] = col2[1];
+    output[12] = col3[1];
+    output[13] = col4[1];
+    output[14] = col5[1];
+    output[15] = col6[1];
+    output[16] = col7[1];
+    output[17] = col8[1];
+    output[18] = col0[2];
+    output[19] = col1[2];
+    output[20] = col2[2];
+    output[21] = col3[2];
+    output[22] = col4[2];
+    output[23] = col5[2];
+    output[24] = col6[2];
+    output[25] = col7[2];
+    output[26] = col8[2];
+}
+
+#[doc = concat!("Inner FFT")]
+#[inline(always)]
+pub fn fft125<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A, output: &mut [Complex<T>]) {
     let n = 125;
     let x = input.as_ref();
     assert_eq!(n, x.len());
+    assert_eq!(n, output.len());
 
     let twiddle0 = Complex::new(T::from(1).unwrap(), T::from(-0).unwrap());
     let twiddle1 = Complex::new(T::from(1).unwrap(), T::from(-0).unwrap());
@@ -518,412 +664,767 @@ pub fn fft125<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Compl
         T::from(0.9936113105200084).unwrap(),
     );
 
-    let row0 = fft5([x[0], x[25], x[50], x[75], x[100]]);
-    let row1 = fft5([x[5], x[30], x[55], x[80], x[105]]);
-    let row2 = fft5([x[10], x[35], x[60], x[85], x[110]]);
-    let row3 = fft5([x[15], x[40], x[65], x[90], x[115]]);
-    let row4 = fft5([x[20], x[45], x[70], x[95], x[120]]);
-    let row5 = fft5([x[1], x[26], x[51], x[76], x[101]]);
-    let row6 = fft5([x[6], x[31], x[56], x[81], x[106]]);
-    let row7 = fft5([x[11], x[36], x[61], x[86], x[111]]);
-    let row8 = fft5([x[16], x[41], x[66], x[91], x[116]]);
-    let row9 = fft5([x[21], x[46], x[71], x[96], x[121]]);
+    let mut row0: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row1: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row2: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row3: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row4: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row5: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row6: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row7: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row8: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row9: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row10: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row11: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row12: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row13: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row14: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row15: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row16: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row17: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row18: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row19: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row20: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row21: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row22: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row23: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut row24: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
 
-    let row10 = fft5([x[2], x[2 + 25], x[2 + 50], x[2 + 75], x[2 + 100]]);
-    let row11 = fft5([x[2 + 5], x[2 + 30], x[2 + 55], x[2 + 80], x[2 + 105]]);
-    let row12 = fft5([x[2 + 10], x[2 + 35], x[2 + 60], x[2 + 85], x[2 + 110]]);
-    let row13 = fft5([x[2 + 15], x[2 + 40], x[2 + 65], x[2 + 90], x[2 + 115]]);
-    let row14 = fft5([x[2 + 20], x[2 + 45], x[2 + 70], x[2 + 95], x[2 + 120]]);
-    let row15 = fft5([x[2 + 1], x[2 + 26], x[2 + 51], x[2 + 76], x[2 + 101]]);
-    let row16 = fft5([x[2 + 6], x[2 + 31], x[2 + 56], x[2 + 81], x[2 + 106]]);
-    let row17 = fft5([x[2 + 11], x[2 + 36], x[2 + 61], x[2 + 86], x[2 + 111]]);
-    let row18 = fft5([x[2 + 16], x[2 + 41], x[2 + 66], x[2 + 91], x[2 + 116]]);
-    let row19 = fft5([x[2 + 21], x[2 + 46], x[2 + 71], x[2 + 96], x[2 + 121]]);
+    fft5([x[0], x[25], x[50], x[75], x[100]], row0.as_mut_slice());
+    fft5([x[5], x[30], x[55], x[80], x[105]], row1.as_mut_slice());
+    fft5([x[10], x[35], x[60], x[85], x[110]], row2.as_mut_slice());
+    fft5([x[15], x[40], x[65], x[90], x[115]], row3.as_mut_slice());
+    fft5([x[20], x[45], x[70], x[95], x[120]], row4.as_mut_slice());
+    fft5([x[1], x[26], x[51], x[76], x[101]], row5.as_mut_slice());
+    fft5([x[6], x[31], x[56], x[81], x[106]], row6.as_mut_slice());
+    fft5([x[11], x[36], x[61], x[86], x[111]], row7.as_mut_slice());
+    fft5([x[16], x[41], x[66], x[91], x[116]], row8.as_mut_slice());
+    fft5([x[21], x[46], x[71], x[96], x[121]], row9.as_mut_slice());
 
-    let row20 = fft5([x[4], x[4 + 25], x[4 + 50], x[4 + 75], x[4 + 100]]);
-    let row21 = fft5([x[4 + 5], x[4 + 30], x[4 + 55], x[4 + 80], x[4 + 105]]);
-    let row22 = fft5([x[4 + 10], x[4 + 35], x[4 + 60], x[4 + 85], x[4 + 110]]);
-    let row23 = fft5([x[4 + 15], x[4 + 40], x[4 + 65], x[4 + 90], x[4 + 115]]);
-    let row24 = fft5([x[4 + 20], x[4 + 45], x[4 + 70], x[4 + 95], x[4 + 120]]);
+    fft5(
+        [x[2], x[2 + 25], x[2 + 50], x[2 + 75], x[2 + 100]],
+        row10.as_mut_slice(),
+    );
+    fft5(
+        [x[2 + 5], x[2 + 30], x[2 + 55], x[2 + 80], x[2 + 105]],
+        row11.as_mut_slice(),
+    );
+    fft5(
+        [x[2 + 10], x[2 + 35], x[2 + 60], x[2 + 85], x[2 + 110]],
+        row12.as_mut_slice(),
+    );
+    fft5(
+        [x[2 + 15], x[2 + 40], x[2 + 65], x[2 + 90], x[2 + 115]],
+        row13.as_mut_slice(),
+    );
+    fft5(
+        [x[2 + 20], x[2 + 45], x[2 + 70], x[2 + 95], x[2 + 120]],
+        row14.as_mut_slice(),
+    );
+    fft5(
+        [x[2 + 1], x[2 + 26], x[2 + 51], x[2 + 76], x[2 + 101]],
+        row15.as_mut_slice(),
+    );
+    fft5(
+        [x[2 + 6], x[2 + 31], x[2 + 56], x[2 + 81], x[2 + 106]],
+        row16.as_mut_slice(),
+    );
+    fft5(
+        [x[2 + 11], x[2 + 36], x[2 + 61], x[2 + 86], x[2 + 111]],
+        row17.as_mut_slice(),
+    );
+    fft5(
+        [x[2 + 16], x[2 + 41], x[2 + 66], x[2 + 91], x[2 + 116]],
+        row18.as_mut_slice(),
+    );
+    fft5(
+        [x[2 + 21], x[2 + 46], x[2 + 71], x[2 + 96], x[2 + 121]],
+        row19.as_mut_slice(),
+    );
 
-    let col0 = fft5([
-        row0[0],
-        row1[0] * twiddle0,
-        row2[0] * twiddle1,
-        row3[0] * twiddle2,
-        row4[0] * twiddle3,
-    ]);
-    let col1 = fft5([
-        row0[1],
-        row1[1] * twiddle4,
-        row2[1] * twiddle5,
-        row3[1] * twiddle6,
-        row4[1] * twiddle7,
-    ]);
-    let col2 = fft5([
-        row0[2],
-        row1[2] * twiddle8,
-        row2[2] * twiddle9,
-        row3[2] * twiddle10,
-        row4[2] * twiddle11,
-    ]);
-    let col3 = fft5([
-        row0[3],
-        row1[3] * twiddle12,
-        row2[3] * twiddle13,
-        row3[3] * twiddle14,
-        row4[3] * twiddle15,
-    ]);
-    let col4 = fft5([
-        row0[4],
-        row1[4] * twiddle16,
-        row2[4] * twiddle17,
-        row3[4] * twiddle18,
-        row4[4] * twiddle19,
-    ]);
+    fft5(
+        [x[4], x[4 + 25], x[4 + 50], x[4 + 75], x[4 + 100]],
+        row20.as_mut_slice(),
+    );
+    fft5(
+        [x[4 + 5], x[4 + 30], x[4 + 55], x[4 + 80], x[4 + 105]],
+        row21.as_mut_slice(),
+    );
+    fft5(
+        [x[4 + 10], x[4 + 35], x[4 + 60], x[4 + 85], x[4 + 110]],
+        row22.as_mut_slice(),
+    );
+    fft5(
+        [x[4 + 15], x[4 + 40], x[4 + 65], x[4 + 90], x[4 + 115]],
+        row23.as_mut_slice(),
+    );
+    fft5(
+        [x[4 + 20], x[4 + 45], x[4 + 70], x[4 + 95], x[4 + 120]],
+        row24.as_mut_slice(),
+    );
 
-    let col5 = fft5([
-        row5[0],
-        row6[0] * twiddle0,
-        row7[0] * twiddle1,
-        row8[0] * twiddle2,
-        row9[0] * twiddle3,
-    ]);
-    let col6 = fft5([
-        row5[1],
-        row6[1] * twiddle4,
-        row7[1] * twiddle5,
-        row8[1] * twiddle6,
-        row9[1] * twiddle7,
-    ]);
-    let col7 = fft5([
-        row5[2],
-        row6[2] * twiddle8,
-        row7[2] * twiddle9,
-        row8[2] * twiddle10,
-        row9[2] * twiddle11,
-    ]);
-    let col8 = fft5([
-        row5[3],
-        row6[3] * twiddle12,
-        row7[3] * twiddle13,
-        row8[3] * twiddle14,
-        row9[3] * twiddle15,
-    ]);
-    let col9 = fft5([
-        row5[4],
-        row6[4] * twiddle16,
-        row7[4] * twiddle17,
-        row8[4] * twiddle18,
-        row9[4] * twiddle19,
-    ]);
+    let mut col0: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col1: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col2: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col3: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col4: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col5: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col6: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col7: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col8: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col9: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col10: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col11: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col12: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col13: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col14: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col15: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col16: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col17: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col18: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col19: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col20: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col21: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col22: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col23: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
+    let mut col24: [Complex<T>; 5] = [Complex::new(T::zero(), T::zero()); 5];
 
-    let col10 = fft5([
-        row10[0],
-        row11[0] * twiddle0,
-        row12[0] * twiddle1,
-        row13[0] * twiddle2,
-        row14[0] * twiddle3,
-    ]);
-    let col11 = fft5([
-        row10[1],
-        row11[1] * twiddle4,
-        row12[1] * twiddle5,
-        row13[1] * twiddle6,
-        row14[1] * twiddle7,
-    ]);
-    let col12 = fft5([
-        row10[2],
-        row11[2] * twiddle8,
-        row12[2] * twiddle9,
-        row13[2] * twiddle10,
-        row14[2] * twiddle11,
-    ]);
-    let col13 = fft5([
-        row10[3],
-        row11[3] * twiddle12,
-        row12[3] * twiddle13,
-        row13[3] * twiddle14,
-        row14[3] * twiddle15,
-    ]);
-    let col14 = fft5([
-        row10[4],
-        row11[4] * twiddle16,
-        row12[4] * twiddle17,
-        row13[4] * twiddle18,
-        row14[4] * twiddle19,
-    ]);
+    fft5(
+        [
+            row0[0],
+            row1[0] * twiddle0,
+            row2[0] * twiddle1,
+            row3[0] * twiddle2,
+            row4[0] * twiddle3,
+        ],
+        col0.as_mut_slice(),
+    );
+    fft5(
+        [
+            row0[1],
+            row1[1] * twiddle4,
+            row2[1] * twiddle5,
+            row3[1] * twiddle6,
+            row4[1] * twiddle7,
+        ],
+        col1.as_mut_slice(),
+    );
+    fft5(
+        [
+            row0[2],
+            row1[2] * twiddle8,
+            row2[2] * twiddle9,
+            row3[2] * twiddle10,
+            row4[2] * twiddle11,
+        ],
+        col2.as_mut_slice(),
+    );
+    fft5(
+        [
+            row0[3],
+            row1[3] * twiddle12,
+            row2[3] * twiddle13,
+            row3[3] * twiddle14,
+            row4[3] * twiddle15,
+        ],
+        col3.as_mut_slice(),
+    );
+    fft5(
+        [
+            row0[4],
+            row1[4] * twiddle16,
+            row2[4] * twiddle17,
+            row3[4] * twiddle18,
+            row4[4] * twiddle19,
+        ],
+        col4.as_mut_slice(),
+    );
+    fft5(
+        [
+            row5[0],
+            row6[0] * twiddle0,
+            row7[0] * twiddle1,
+            row8[0] * twiddle2,
+            row9[0] * twiddle3,
+        ],
+        col5.as_mut_slice(),
+    );
+    fft5(
+        [
+            row5[1],
+            row6[1] * twiddle4,
+            row7[1] * twiddle5,
+            row8[1] * twiddle6,
+            row9[1] * twiddle7,
+        ],
+        col6.as_mut_slice(),
+    );
+    fft5(
+        [
+            row5[2],
+            row6[2] * twiddle8,
+            row7[2] * twiddle9,
+            row8[2] * twiddle10,
+            row9[2] * twiddle11,
+        ],
+        col7.as_mut_slice(),
+    );
+    fft5(
+        [
+            row5[3],
+            row6[3] * twiddle12,
+            row7[3] * twiddle13,
+            row8[3] * twiddle14,
+            row9[3] * twiddle15,
+        ],
+        col8.as_mut_slice(),
+    );
+    fft5(
+        [
+            row5[4],
+            row6[4] * twiddle16,
+            row7[4] * twiddle17,
+            row8[4] * twiddle18,
+            row9[4] * twiddle19,
+        ],
+        col9.as_mut_slice(),
+    );
 
-    let col15 = fft5([
-        row15[0],
-        row16[0] * twiddle0,
-        row17[0] * twiddle1,
-        row18[0] * twiddle2,
-        row19[0] * twiddle3,
-    ]);
-    let col16 = fft5([
-        row15[1],
-        row16[1] * twiddle4,
-        row17[1] * twiddle5,
-        row18[1] * twiddle6,
-        row19[1] * twiddle7,
-    ]);
-    let col17 = fft5([
-        row15[2],
-        row16[2] * twiddle8,
-        row17[2] * twiddle9,
-        row18[2] * twiddle10,
-        row19[2] * twiddle11,
-    ]);
-    let col18 = fft5([
-        row15[3],
-        row16[3] * twiddle12,
-        row17[3] * twiddle13,
-        row18[3] * twiddle14,
-        row19[3] * twiddle15,
-    ]);
-    let col19 = fft5([
-        row15[4],
-        row16[4] * twiddle16,
-        row17[4] * twiddle17,
-        row18[4] * twiddle18,
-        row19[4] * twiddle19,
-    ]);
+    fft5(
+        [
+            row10[0],
+            row11[0] * twiddle0,
+            row12[0] * twiddle1,
+            row13[0] * twiddle2,
+            row14[0] * twiddle3,
+        ],
+        col10.as_mut_slice(),
+    );
+    fft5(
+        [
+            row10[1],
+            row11[1] * twiddle4,
+            row12[1] * twiddle5,
+            row13[1] * twiddle6,
+            row14[1] * twiddle7,
+        ],
+        col11.as_mut_slice(),
+    );
+    fft5(
+        [
+            row10[2],
+            row11[2] * twiddle8,
+            row12[2] * twiddle9,
+            row13[2] * twiddle10,
+            row14[2] * twiddle11,
+        ],
+        col12.as_mut_slice(),
+    );
+    fft5(
+        [
+            row10[3],
+            row11[3] * twiddle12,
+            row12[3] * twiddle13,
+            row13[3] * twiddle14,
+            row14[3] * twiddle15,
+        ],
+        col13.as_mut_slice(),
+    );
+    fft5(
+        [
+            row10[4],
+            row11[4] * twiddle16,
+            row12[4] * twiddle17,
+            row13[4] * twiddle18,
+            row14[4] * twiddle19,
+        ],
+        col14.as_mut_slice(),
+    );
 
-    let col20 = fft5([
-        row20[0],
-        row21[0] * twiddle0,
-        row22[0] * twiddle1,
-        row23[0] * twiddle2,
-        row24[0] * twiddle3,
-    ]);
-    let col21 = fft5([
-        row20[1],
-        row21[1] * twiddle4,
-        row22[1] * twiddle5,
-        row23[1] * twiddle6,
-        row24[1] * twiddle7,
-    ]);
-    let col22 = fft5([
-        row20[2],
-        row21[2] * twiddle8,
-        row22[2] * twiddle9,
-        row23[2] * twiddle10,
-        row24[2] * twiddle11,
-    ]);
-    let col23 = fft5([
-        row20[3],
-        row21[3] * twiddle12,
-        row22[3] * twiddle13,
-        row23[3] * twiddle14,
-        row24[3] * twiddle15,
-    ]);
-    let col24 = fft5([
-        row20[4],
-        row21[4] * twiddle16,
-        row22[4] * twiddle17,
-        row23[4] * twiddle18,
-        row24[4] * twiddle19,
-    ]);
+    fft5(
+        [
+            row15[0],
+            row16[0] * twiddle0,
+            row17[0] * twiddle1,
+            row18[0] * twiddle2,
+            row19[0] * twiddle3,
+        ],
+        col15.as_mut_slice(),
+    );
+    fft5(
+        [
+            row15[1],
+            row16[1] * twiddle4,
+            row17[1] * twiddle5,
+            row18[1] * twiddle6,
+            row19[1] * twiddle7,
+        ],
+        col16.as_mut_slice(),
+    );
+    fft5(
+        [
+            row15[2],
+            row16[2] * twiddle8,
+            row17[2] * twiddle9,
+            row18[2] * twiddle10,
+            row19[2] * twiddle11,
+        ],
+        col17.as_mut_slice(),
+    );
+    fft5(
+        [
+            row15[3],
+            row16[3] * twiddle12,
+            row17[3] * twiddle13,
+            row18[3] * twiddle14,
+            row19[3] * twiddle15,
+        ],
+        col18.as_mut_slice(),
+    );
+    fft5(
+        [
+            row15[4],
+            row16[4] * twiddle16,
+            row17[4] * twiddle17,
+            row18[4] * twiddle18,
+            row19[4] * twiddle19,
+        ],
+        col19.as_mut_slice(),
+    );
 
-    let row0 = fft5([
-        col0[0],
-        col5[0] * twiddle20,
-        col10[0] * twiddle21,
-        col15[0] * twiddle22,
-        col20[0] * twiddle23,
-    ]);
-    let row1 = fft5([
-        col1[0],
-        col6[0] * twiddle24,
-        col11[0] * twiddle25,
-        col16[0] * twiddle26,
-        col21[0] * twiddle27,
-    ]);
-    let row2 = fft5([
-        col2[0],
-        col7[0] * twiddle28,
-        col12[0] * twiddle29,
-        col17[0] * twiddle30,
-        col22[0] * twiddle31,
-    ]);
-    let row3 = fft5([
-        col3[0],
-        col8[0] * twiddle32,
-        col13[0] * twiddle33,
-        col18[0] * twiddle34,
-        col23[0] * twiddle35,
-    ]);
-    let row4 = fft5([
-        col4[0],
-        col9[0] * twiddle36,
-        col14[0] * twiddle37,
-        col19[0] * twiddle38,
-        col24[0] * twiddle39,
-    ]);
+    fft5(
+        [
+            row20[0],
+            row21[0] * twiddle0,
+            row22[0] * twiddle1,
+            row23[0] * twiddle2,
+            row24[0] * twiddle3,
+        ],
+        col20.as_mut_slice(),
+    );
+    fft5(
+        [
+            row20[1],
+            row21[1] * twiddle4,
+            row22[1] * twiddle5,
+            row23[1] * twiddle6,
+            row24[1] * twiddle7,
+        ],
+        col21.as_mut_slice(),
+    );
+    fft5(
+        [
+            row20[2],
+            row21[2] * twiddle8,
+            row22[2] * twiddle9,
+            row23[2] * twiddle10,
+            row24[2] * twiddle11,
+        ],
+        col22.as_mut_slice(),
+    );
+    fft5(
+        [
+            row20[3],
+            row21[3] * twiddle12,
+            row22[3] * twiddle13,
+            row23[3] * twiddle14,
+            row24[3] * twiddle15,
+        ],
+        col23.as_mut_slice(),
+    );
+    fft5(
+        [
+            row20[4],
+            row21[4] * twiddle16,
+            row22[4] * twiddle17,
+            row23[4] * twiddle18,
+            row24[4] * twiddle19,
+        ],
+        col24.as_mut_slice(),
+    );
 
-    let row5 = fft5([
-        col0[1],
-        col5[1] * twiddle40,
-        col10[1] * twiddle41,
-        col15[1] * twiddle42,
-        col20[1] * twiddle43,
-    ]);
-    let row6 = fft5([
-        col1[1],
-        col6[1] * twiddle44,
-        col11[1] * twiddle45,
-        col16[1] * twiddle46,
-        col21[1] * twiddle47,
-    ]);
-    let row7 = fft5([
-        col2[1],
-        col7[1] * twiddle48,
-        col12[1] * twiddle49,
-        col17[1] * twiddle50,
-        col22[1] * twiddle51,
-    ]);
-    let row8 = fft5([
-        col3[1],
-        col8[1] * twiddle52,
-        col13[1] * twiddle53,
-        col18[1] * twiddle54,
-        col23[1] * twiddle55,
-    ]);
-    let row9 = fft5([
-        col4[1],
-        col9[1] * twiddle56,
-        col14[1] * twiddle57,
-        col19[1] * twiddle58,
-        col24[1] * twiddle59,
-    ]);
+    fft5(
+        [
+            col0[0],
+            col5[0] * twiddle20,
+            col10[0] * twiddle21,
+            col15[0] * twiddle22,
+            col20[0] * twiddle23,
+        ],
+        row0.as_mut_slice(),
+    );
+    fft5(
+        [
+            col1[0],
+            col6[0] * twiddle24,
+            col11[0] * twiddle25,
+            col16[0] * twiddle26,
+            col21[0] * twiddle27,
+        ],
+        row1.as_mut_slice(),
+    );
+    fft5(
+        [
+            col2[0],
+            col7[0] * twiddle28,
+            col12[0] * twiddle29,
+            col17[0] * twiddle30,
+            col22[0] * twiddle31,
+        ],
+        row2.as_mut_slice(),
+    );
+    fft5(
+        [
+            col3[0],
+            col8[0] * twiddle32,
+            col13[0] * twiddle33,
+            col18[0] * twiddle34,
+            col23[0] * twiddle35,
+        ],
+        row3.as_mut_slice(),
+    );
+    fft5(
+        [
+            col4[0],
+            col9[0] * twiddle36,
+            col14[0] * twiddle37,
+            col19[0] * twiddle38,
+            col24[0] * twiddle39,
+        ],
+        row4.as_mut_slice(),
+    );
 
-    let row10 = fft5([
-        col0[2],
-        col5[2] * twiddle60,
-        col10[2] * twiddle61,
-        col15[2] * twiddle62,
-        col20[2] * twiddle63,
-    ]);
-    let row11 = fft5([
-        col1[2],
-        col6[2] * twiddle64,
-        col11[2] * twiddle65,
-        col16[2] * twiddle66,
-        col21[2] * twiddle67,
-    ]);
-    let row12 = fft5([
-        col2[2],
-        col7[2] * twiddle68,
-        col12[2] * twiddle69,
-        col17[2] * twiddle70,
-        col22[2] * twiddle71,
-    ]);
-    let row13 = fft5([
-        col3[2],
-        col8[2] * twiddle72,
-        col13[2] * twiddle73,
-        col18[2] * twiddle74,
-        col23[2] * twiddle75,
-    ]);
-    let row14 = fft5([
-        col4[2],
-        col9[2] * twiddle76,
-        col14[2] * twiddle77,
-        col19[2] * twiddle78,
-        col24[2] * twiddle79,
-    ]);
+    fft5(
+        [
+            col0[1],
+            col5[1] * twiddle40,
+            col10[1] * twiddle41,
+            col15[1] * twiddle42,
+            col20[1] * twiddle43,
+        ],
+        row5.as_mut_slice(),
+    );
+    fft5(
+        [
+            col1[1],
+            col6[1] * twiddle44,
+            col11[1] * twiddle45,
+            col16[1] * twiddle46,
+            col21[1] * twiddle47,
+        ],
+        row6.as_mut_slice(),
+    );
+    fft5(
+        [
+            col2[1],
+            col7[1] * twiddle48,
+            col12[1] * twiddle49,
+            col17[1] * twiddle50,
+            col22[1] * twiddle51,
+        ],
+        row7.as_mut_slice(),
+    );
+    fft5(
+        [
+            col3[1],
+            col8[1] * twiddle52,
+            col13[1] * twiddle53,
+            col18[1] * twiddle54,
+            col23[1] * twiddle55,
+        ],
+        row8.as_mut_slice(),
+    );
+    fft5(
+        [
+            col4[1],
+            col9[1] * twiddle56,
+            col14[1] * twiddle57,
+            col19[1] * twiddle58,
+            col24[1] * twiddle59,
+        ],
+        row9.as_mut_slice(),
+    );
 
-    let row15 = fft5([
-        col0[3],
-        col5[3] * twiddle80,
-        col10[3] * twiddle81,
-        col15[3] * twiddle82,
-        col20[3] * twiddle83,
-    ]);
-    let row16 = fft5([
-        col1[3],
-        col6[3] * twiddle84,
-        col11[3] * twiddle85,
-        col16[3] * twiddle86,
-        col21[3] * twiddle87,
-    ]);
-    let row17 = fft5([
-        col2[3],
-        col7[3] * twiddle88,
-        col12[3] * twiddle89,
-        col17[3] * twiddle90,
-        col22[3] * twiddle91,
-    ]);
-    let row18 = fft5([
-        col3[3],
-        col8[3] * twiddle92,
-        col13[3] * twiddle93,
-        col18[3] * twiddle94,
-        col23[3] * twiddle95,
-    ]);
-    let row19 = fft5([
-        col4[3],
-        col9[3] * twiddle96,
-        col14[3] * twiddle97,
-        col19[3] * twiddle98,
-        col24[3] * twiddle99,
-    ]);
+    fft5(
+        [
+            col0[2],
+            col5[2] * twiddle60,
+            col10[2] * twiddle61,
+            col15[2] * twiddle62,
+            col20[2] * twiddle63,
+        ],
+        row10.as_mut_slice(),
+    );
+    fft5(
+        [
+            col1[2],
+            col6[2] * twiddle64,
+            col11[2] * twiddle65,
+            col16[2] * twiddle66,
+            col21[2] * twiddle67,
+        ],
+        row11.as_mut_slice(),
+    );
+    fft5(
+        [
+            col2[2],
+            col7[2] * twiddle68,
+            col12[2] * twiddle69,
+            col17[2] * twiddle70,
+            col22[2] * twiddle71,
+        ],
+        row12.as_mut_slice(),
+    );
+    fft5(
+        [
+            col3[2],
+            col8[2] * twiddle72,
+            col13[2] * twiddle73,
+            col18[2] * twiddle74,
+            col23[2] * twiddle75,
+        ],
+        row13.as_mut_slice(),
+    );
+    fft5(
+        [
+            col4[2],
+            col9[2] * twiddle76,
+            col14[2] * twiddle77,
+            col19[2] * twiddle78,
+            col24[2] * twiddle79,
+        ],
+        row14.as_mut_slice(),
+    );
 
-    let row20 = fft5([
-        col0[4],
-        col5[4] * twiddle100,
-        col10[4] * twiddle101,
-        col15[4] * twiddle102,
-        col20[4] * twiddle103,
-    ]);
-    let row21 = fft5([
-        col1[4],
-        col6[4] * twiddle104,
-        col11[4] * twiddle105,
-        col16[4] * twiddle106,
-        col21[4] * twiddle107,
-    ]);
-    let row22 = fft5([
-        col2[4],
-        col7[4] * twiddle108,
-        col12[4] * twiddle109,
-        col17[4] * twiddle110,
-        col22[4] * twiddle111,
-    ]);
-    let row23 = fft5([
-        col3[4],
-        col8[4] * twiddle112,
-        col13[4] * twiddle113,
-        col18[4] * twiddle114,
-        col23[4] * twiddle115,
-    ]);
-    let row24 = fft5([
-        col4[4],
-        col9[4] * twiddle116,
-        col14[4] * twiddle117,
-        col19[4] * twiddle118,
-        col24[4] * twiddle119,
-    ]);
+    fft5(
+        [
+            col0[3],
+            col5[3] * twiddle80,
+            col10[3] * twiddle81,
+            col15[3] * twiddle82,
+            col20[3] * twiddle83,
+        ],
+        row15.as_mut_slice(),
+    );
+    fft5(
+        [
+            col1[3],
+            col6[3] * twiddle84,
+            col11[3] * twiddle85,
+            col16[3] * twiddle86,
+            col21[3] * twiddle87,
+        ],
+        row16.as_mut_slice(),
+    );
+    fft5(
+        [
+            col2[3],
+            col7[3] * twiddle88,
+            col12[3] * twiddle89,
+            col17[3] * twiddle90,
+            col22[3] * twiddle91,
+        ],
+        row17.as_mut_slice(),
+    );
+    fft5(
+        [
+            col3[3],
+            col8[3] * twiddle92,
+            col13[3] * twiddle93,
+            col18[3] * twiddle94,
+            col23[3] * twiddle95,
+        ],
+        row18.as_mut_slice(),
+    );
+    fft5(
+        [
+            col4[3],
+            col9[3] * twiddle96,
+            col14[3] * twiddle97,
+            col19[3] * twiddle98,
+            col24[3] * twiddle99,
+        ],
+        row19.as_mut_slice(),
+    );
 
-    [
-        row0[0], row1[0], row2[0], row3[0], row4[0], row5[0], row6[0], row7[0], row8[0], row9[0],
-        row10[0], row11[0], row12[0], row13[0], row14[0], row15[0], row16[0], row17[0], row18[0],
-        row19[0], row20[0], row21[0], row22[0], row23[0], row24[0], row0[1], row1[1], row2[1],
-        row3[1], row4[1], row5[1], row6[1], row7[1], row8[1], row9[1], row10[1], row11[1],
-        row12[1], row13[1], row14[1], row15[1], row16[1], row17[1], row18[1], row19[1], row20[1],
-        row21[1], row22[1], row23[1], row24[1], row0[2], row1[2], row2[2], row3[2], row4[2],
-        row5[2], row6[2], row7[2], row8[2], row9[2], row10[2], row11[2], row12[2], row13[2],
-        row14[2], row15[2], row16[2], row17[2], row18[2], row19[2], row20[2], row21[2], row22[2],
-        row23[2], row24[2], row0[3], row1[3], row2[3], row3[3], row4[3], row5[3], row6[3], row7[3],
-        row8[3], row9[3], row10[3], row11[3], row12[3], row13[3], row14[3], row15[3], row16[3],
-        row17[3], row18[3], row19[3], row20[3], row21[3], row22[3], row23[3], row24[3], row0[4],
-        row1[4], row2[4], row3[4], row4[4], row5[4], row6[4], row7[4], row8[4], row9[4], row10[4],
-        row11[4], row12[4], row13[4], row14[4], row15[4], row16[4], row17[4], row18[4], row19[4],
-        row20[4], row21[4], row22[4], row23[4], row24[4],
-    ]
+    fft5(
+        [
+            col0[4],
+            col5[4] * twiddle100,
+            col10[4] * twiddle101,
+            col15[4] * twiddle102,
+            col20[4] * twiddle103,
+        ],
+        row20.as_mut_slice(),
+    );
+    fft5(
+        [
+            col1[4],
+            col6[4] * twiddle104,
+            col11[4] * twiddle105,
+            col16[4] * twiddle106,
+            col21[4] * twiddle107,
+        ],
+        row21.as_mut_slice(),
+    );
+    fft5(
+        [
+            col2[4],
+            col7[4] * twiddle108,
+            col12[4] * twiddle109,
+            col17[4] * twiddle110,
+            col22[4] * twiddle111,
+        ],
+        row22.as_mut_slice(),
+    );
+    fft5(
+        [
+            col3[4],
+            col8[4] * twiddle112,
+            col13[4] * twiddle113,
+            col18[4] * twiddle114,
+            col23[4] * twiddle115,
+        ],
+        row23.as_mut_slice(),
+    );
+    fft5(
+        [
+            col4[4],
+            col9[4] * twiddle116,
+            col14[4] * twiddle117,
+            col19[4] * twiddle118,
+            col24[4] * twiddle119,
+        ],
+        row24.as_mut_slice(),
+    );
+
+    output[0] = row0[0];
+    output[1] = row1[0];
+    output[2] = row2[0];
+    output[3] = row3[0];
+    output[4] = row4[0];
+    output[5] = row5[0];
+    output[6] = row6[0];
+    output[7] = row7[0];
+    output[8] = row8[0];
+    output[9] = row9[0];
+    output[10] = row10[0];
+    output[11] = row11[0];
+    output[12] = row12[0];
+    output[13] = row13[0];
+    output[14] = row14[0];
+    output[15] = row15[0];
+    output[16] = row16[0];
+    output[17] = row17[0];
+    output[18] = row18[0];
+    output[19] = row19[0];
+    output[20] = row20[0];
+    output[21] = row21[0];
+    output[22] = row22[0];
+    output[23] = row23[0];
+    output[24] = row24[0];
+    output[25] = row0[1];
+    output[26] = row1[1];
+    output[27] = row2[1];
+    output[28] = row3[1];
+    output[29] = row4[1];
+    output[30] = row5[1];
+    output[31] = row6[1];
+    output[32] = row7[1];
+    output[33] = row8[1];
+    output[34] = row9[1];
+    output[35] = row10[1];
+    output[36] = row11[1];
+    output[37] = row12[1];
+    output[38] = row13[1];
+    output[39] = row14[1];
+    output[40] = row15[1];
+    output[41] = row16[1];
+    output[42] = row17[1];
+    output[43] = row18[1];
+    output[44] = row19[1];
+    output[45] = row20[1];
+    output[46] = row21[1];
+    output[47] = row22[1];
+    output[48] = row23[1];
+    output[49] = row24[1];
+    output[50] = row0[2];
+    output[51] = row1[2];
+    output[52] = row2[2];
+    output[53] = row3[2];
+    output[54] = row4[2];
+    output[55] = row5[2];
+    output[56] = row6[2];
+    output[57] = row7[2];
+    output[58] = row8[2];
+    output[59] = row9[2];
+    output[60] = row10[2];
+    output[61] = row11[2];
+    output[62] = row12[2];
+    output[63] = row13[2];
+    output[64] = row14[2];
+    output[65] = row15[2];
+    output[66] = row16[2];
+    output[67] = row17[2];
+    output[68] = row18[2];
+    output[69] = row19[2];
+    output[70] = row20[2];
+    output[71] = row21[2];
+    output[72] = row22[2];
+    output[73] = row23[2];
+    output[74] = row24[2];
+    output[75] = row0[3];
+    output[76] = row1[3];
+    output[77] = row2[3];
+    output[78] = row3[3];
+    output[79] = row4[3];
+    output[80] = row5[3];
+    output[81] = row6[3];
+    output[82] = row7[3];
+    output[83] = row8[3];
+    output[84] = row9[3];
+    output[85] = row10[3];
+    output[86] = row11[3];
+    output[87] = row12[3];
+    output[88] = row13[3];
+    output[89] = row14[3];
+    output[90] = row15[3];
+    output[91] = row16[3];
+    output[92] = row17[3];
+    output[93] = row18[3];
+    output[94] = row19[3];
+    output[95] = row20[3];
+    output[96] = row21[3];
+    output[97] = row22[3];
+    output[98] = row23[3];
+    output[99] = row24[3];
+    output[100] = row0[4];
+    output[101] = row1[4];
+    output[102] = row2[4];
+    output[103] = row3[4];
+    output[104] = row4[4];
+    output[105] = row5[4];
+    output[106] = row6[4];
+    output[107] = row7[4];
+    output[108] = row8[4];
+    output[109] = row9[4];
+    output[110] = row10[4];
+    output[111] = row11[4];
+    output[112] = row12[4];
+    output[113] = row13[4];
+    output[114] = row14[4];
+    output[115] = row15[4];
+    output[116] = row16[4];
+    output[117] = row17[4];
+    output[118] = row18[4];
+    output[119] = row19[4];
+    output[120] = row20[4];
+    output[121] = row21[4];
+    output[122] = row22[4];
+    output[123] = row23[4];
+    output[124] = row24[4];
 }
-*/
+
 // #[cfg(test)]
 // mod tests {
 //     use num_complex::Complex;
