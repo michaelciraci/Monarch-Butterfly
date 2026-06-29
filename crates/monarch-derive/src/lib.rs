@@ -178,6 +178,7 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
                 let n = #s;
                 let x = input.as_ref();
                 assert_eq!(n, x.len());
+                assert_eq!(n, output.len());
 
                 let mut even: [Complex<T>; #half] = [Complex::<T>::new(T::zero(), T::zero()); #half];
                 let mut odd: [Complex<T>; #half] = [Complex::<T>::new(T::zero(), T::zero()); #half];

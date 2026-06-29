@@ -23,10 +23,11 @@ macro_rules! generate_comparison {
         });
 
         let input = [Complex::<f32>::ZERO; $idx];
+        let mut monarch_out = [Complex::<f32>::ZERO; $idx];
 
         $c.bench_function(&format!("monarch-{}", $idx), |b| {
             b.iter(|| {
-                let _ = fft::<$idx, _, _>(black_box(input));
+                fft::<$idx, _, _>(black_box(input), monarch_out.as_mut_slice());
             })
         });
 

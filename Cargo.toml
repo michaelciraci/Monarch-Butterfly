@@ -1,3 +1,11 @@
+[workspace]
+resolver = "2"
+members = [
+    ".",
+    "crates/monarch-derive",
+    "crates/benches"
+]
+
 [package]
 name = "monarch-butterfly"
 version = "0.4.1"
