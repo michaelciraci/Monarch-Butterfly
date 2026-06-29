@@ -17,14 +17,6 @@ monarch_derive::generate_mixed_radix!();
 monarch_derive::generate_primes!();
 monarch_derive::generate_iffts!();
 
-fn _compute_twiddle<T: Float + FloatConst>(index: usize, fft_len: usize) -> Complex<T> {
-    let constant = T::from(-2.0).unwrap() * T::PI() / T::from(fft_len).unwrap();
-    // index * -2PI / fft_len
-    let angle = constant * T::from(index).unwrap();
-
-    Complex::new(angle.cos(), angle.sin())
-}
-
 #[doc = concat!("Inner FFT")]
 #[inline(always)]
 pub fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 3] {
@@ -49,109 +41,6 @@ pub fn fft3<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex
     };
 
     [sum, temp_a + temp_b, temp_a - temp_b]
-}
-
-#[doc = concat!("Inner FFT")]
-#[inline(always)]
-pub fn fft9<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 9] {
-    let n = 9;
-    let x = input.as_ref();
-    assert_eq!(n, x.len());
-
-    let twiddle1: Complex<T> = Complex::new(
-        T::from(0.76604444311897801).unwrap(),
-        T::from(-0.64278760968653925).unwrap(),
-    );
-    let twiddle2: Complex<T> = Complex::new(
-        T::from(0.17364817766693041).unwrap(),
-        T::from(-0.98480775301220802).unwrap(),
-    );
-    let twiddle4: Complex<T> = Complex::new(
-        T::from(-0.93969262078590832).unwrap(),
-        T::from(-0.34202014332566888).unwrap(),
-    );
-
-    let first = fft3([x[0], x[3], x[6]]);
-    let second = fft3([x[1], x[4], x[7]]);
-    let third = fft3([x[2], x[5], x[8]]);
-
-    let row0 = fft3([first[0], second[0], third[0]]);
-    let row1 = fft3([first[1], second[1] * twiddle1, third[1] * twiddle2]);
-    let row2 = fft3([first[2], second[2] * twiddle2, third[2] * twiddle4]);
-
-    [
-        row0[0], row1[0], row2[0], row0[1], row1[1], row2[1], row0[2], row1[2], row2[2],
-    ]
-}
-
-#[doc = concat!("Inner FFT")]
-#[inline(always)]
-pub fn fft18<T: Float + FloatConst, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 18] {
-    let n = 18;
-    let x = input.as_ref();
-    assert_eq!(n, x.len());
-
-    let twiddle0 = Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap());
-    let twiddle1 = Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap());
-    let twiddle2 = Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap());
-    let twiddle3 = Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap());
-    let twiddle4 = Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap());
-    let twiddle5 = Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap());
-    let twiddle6 = Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap());
-    let twiddle7 = Complex::new(
-        T::from(0.93969262078590842).unwrap(),
-        T::from(-0.34202014332566871).unwrap(),
-    );
-    let twiddle8 = Complex::new(
-        T::from(0.76604444311897801).unwrap(),
-        T::from(-0.64278760968653925).unwrap(),
-    );
-    let twiddle9 = Complex::new(T::from(0.5).unwrap(), T::from(-0.8660254037844386).unwrap());
-    let twiddle10 = Complex::new(
-        T::from(0.17364817766693041).unwrap(),
-        T::from(-0.98480775301220802).unwrap(),
-    );
-    let twiddle11 = Complex::new(
-        T::from(-0.1736481776669303).unwrap(),
-        T::from(-0.98480775301220802).unwrap(),
-    );
-    let twiddle12 = Complex::new(T::from(1.0).unwrap(), T::from(0.0).unwrap());
-    let twiddle13 = Complex::new(
-        T::from(0.76604444311897801).unwrap(),
-        T::from(-0.64278760968653925).unwrap(),
-    );
-    let twiddle14 = Complex::new(
-        T::from(0.17364817766693041).unwrap(),
-        T::from(-0.98480775301220802).unwrap(),
-    );
-    let twiddle15 = Complex::new(
-        T::from(-0.5).unwrap(),
-        T::from(-0.86602540378443881).unwrap(),
-    );
-    let twiddle16 = Complex::new(
-        T::from(-0.93969262078590832).unwrap(),
-        T::from(-0.34202014332566888).unwrap(),
-    );
-    let twiddle17 = Complex::new(
-        T::from(-0.93969262078590842).unwrap(),
-        T::from(0.34202014332566866).unwrap(),
-    );
-
-    let row0 = fft6([x[0], x[3], x[6], x[9], x[12], x[15]]);
-    let row1 = fft6([x[1], x[4], x[7], x[10], x[13], x[16]]);
-    let row2 = fft6([x[2], x[5], x[8], x[11], x[14], x[17]]);
-
-    let col0 = fft3([row0[0] * twiddle0, row1[0] * twiddle6, row2[0] * twiddle12]);
-    let col1 = fft3([row0[1] * twiddle1, row1[1] * twiddle7, row2[1] * twiddle13]);
-    let col2 = fft3([row0[2] * twiddle2, row1[2] * twiddle8, row2[2] * twiddle14]);
-    let col3 = fft3([row0[3] * twiddle3, row1[3] * twiddle9, row2[3] * twiddle15]);
-    let col4 = fft3([row0[4] * twiddle4, row1[4] * twiddle10, row2[4] * twiddle16]);
-    let col5 = fft3([row0[5] * twiddle5, row1[5] * twiddle11, row2[5] * twiddle17]);
-
-    [
-        col0[0], col1[0], col2[0], col3[0], col4[0], col5[0], col0[1], col1[1], col2[1], col3[1],
-        col4[1], col5[1], col0[2], col1[2], col2[2], col3[2], col4[2], col5[2],
-    ]
 }
 
 #[doc = concat!("Inner FFT")]

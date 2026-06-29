@@ -9,20 +9,20 @@ use proc_macro::{Span, TokenStream};
 use quote::quote;
 use syn::Ident;
 
-const SIZES: [usize; 194] = [
-    2, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30,
-    31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54,
-    55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
-    79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101,
-    102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
-    121, 122, 123, 124, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
-    141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
-    160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178,
-    179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197,
-    198, 199, 200,
+const SIZES: [usize; 196] = [
+    2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28,
+    29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52,
+    53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
+    77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
+    100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118,
+    119, 120, 121, 122, 123, 124, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138,
+    139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157,
+    158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
+    177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195,
+    196, 197, 198, 199, 200,
 ];
 
-const HAND_GEN: [usize; 5] = [3, 9, 18, 27, 125];
+const HAND_GEN: [usize; 3] = [3, 27, 125];
 
 #[derive(PartialEq, Debug)]
 enum FFTType {
@@ -34,7 +34,9 @@ enum FFTType {
 
 impl FFTType {
     fn compute_type(n: usize) -> FFTType {
-        if n.is_power_of_two() {
+        if n == 27 || n == 125 {
+            FFTType::Mixed
+        } else if n.is_power_of_two() {
             FFTType::PowerOfTwo
         } else {
             // Check if it has an integer square root
@@ -76,11 +78,7 @@ fn compute_twiddle_forward<T: Float + FloatConst>(index: usize, fft_len: usize) 
 
 #[proc_macro]
 pub fn generate_switch(_input: TokenStream) -> TokenStream {
-    let mut all_sizes: Vec<_> = SIZES
-        .clone()
-        .into_iter()
-        .chain(HAND_GEN.clone().into_iter())
-        .collect();
+    let mut all_sizes: Vec<_> = SIZES.into_iter().chain(HAND_GEN).collect();
     all_sizes.sort();
 
     let ss_forward = all_sizes.clone().into_iter().map(|s| {
@@ -106,11 +104,11 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         /// Top level FFT function
-        /// 
+        ///
         /// ```
         /// use monarch_butterfly::*;
         /// use num_complex::Complex;
-        /// 
+        ///
         /// let input: Vec<_> = (0..8).map(|i| Complex::new(i as f32, 0.0)).collect();
         /// let output = fft::<8, _, _>(input);
         /// ```
@@ -127,11 +125,11 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
         }
 
          /// Top level iFFT function
-        /// 
+        ///
         /// ```
         /// use monarch_butterfly::*;
         /// use num_complex::Complex;
-        /// 
+        ///
         /// let input: Vec<_> = (0..8).map(|i| Complex::new(i as f32, 0.0)).collect();
         /// let output = ifft::<8, _, _>(input);
         /// ```
@@ -153,7 +151,6 @@ pub fn generate_switch(_input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
     let sizes = SIZES
-        .clone()
         .into_iter()
         .filter(|n| FFTType::compute_type(*n) == FFTType::PowerOfTwo);
     let ss = sizes.map(|s| {
@@ -213,7 +210,7 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
     });
 
     let expanded = quote! {
-        
+
         #[inline(always)]
         pub fn fft1<T: Float, A: AsRef<[Complex<T>]>>(input: A) -> [Complex<T>; 1] {
             let n = 1;
@@ -231,7 +228,6 @@ pub fn generate_powers_of_two(_input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
     let sizes = SIZES
-        .clone()
         .into_iter()
         .filter(|n| FFTType::compute_type(*n) == FFTType::Coprime);
     let ss = sizes.map(|s| {
@@ -306,7 +302,6 @@ pub fn generate_coprimes(_input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
     let sizes = SIZES
-        .clone()
         .into_iter()
         .filter(|n| FFTType::compute_type(*n) == FFTType::Mixed);
     let ss = sizes.map(|s| {
@@ -391,7 +386,6 @@ pub fn generate_mixed_radix(_input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn generate_primes(_input: TokenStream) -> TokenStream {
     let sizes = SIZES
-        .clone()
         .into_iter()
         .filter(|n| FFTType::compute_type(*n) == FFTType::Prime);
     let ss = sizes.map(|s| {
@@ -580,11 +574,7 @@ pub fn generate_primes(_input: TokenStream) -> TokenStream {
 
 #[proc_macro]
 pub fn generate_iffts(_input: TokenStream) -> TokenStream {
-    let mut all_sizes: Vec<_> = SIZES
-        .clone()
-        .into_iter()
-        .chain(HAND_GEN.clone().into_iter())
-        .collect();
+    let mut all_sizes: Vec<_> = SIZES.into_iter().chain(HAND_GEN).collect();
     all_sizes.sort();
     let iffts = all_sizes.into_iter().map(|n| {
         let func = Ident::new(&format!("ifft{}", n), Span::call_site().into());
@@ -705,6 +695,8 @@ mod tests {
     #[test]
     fn test_fft_type() {
         assert_eq!(FFTType::compute_type(25), FFTType::Mixed);
+        assert_eq!(FFTType::compute_type(27), FFTType::Mixed);
         assert_eq!(FFTType::compute_type(36), FFTType::Coprime);
+        assert_eq!(FFTType::compute_type(125), FFTType::Mixed);
     }
 }
