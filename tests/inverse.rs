@@ -35,7 +35,7 @@ macro_rules! compare_against_rustifft {
             let mut p = rustfft::FftPlanner::new();
             let plan = p.plan_fft_inverse($n);
             let mut buf: Vec<_> = (0..$n)
-                .map(|i| Complex::<f64>::new(i as f64, 0.0))
+                .map(|i| Complex::<f64>::new(i as f64, (i * i % 23) as f64))
                 .collect();
             let monarch = ifft::<$n, _, _>(&buf);
             plan.process(&mut buf);

@@ -5,50 +5,30 @@
 
 # Monarch Butterfly
 
-Experimental FFT library where all FFTs are proc-macro generated const-evaluation functions. 
-The one requirement is you must know the size of the FFT at compile-time. Knowing the FFT size at
-compile time gives immense gains, as the compiler is able unroll the call stack and optimize for
-SIMD throughput through function calls.
-
-This library implements FFTs for both `f32` and `f64` sizes `1-200`. The FFTs are auto-generated so this limit could be increased above 200 at the expense of compile time.
-
-## Features
-
-- All functions are auto-generated with proc-macros with unrolled loops
-- Zero `unsafe` code
-- no_std
-- Completely portable
-- Const-evaluation functions
-
-## Limitations
-
-- FFT size must be known at compile time
-- By default, only FFTs up to size 200 are generated
-
-## Comparison
-
-RustFFT and FFTW FFT sizes can be decided at runtime, so comparing against a library whose FFT sizes need to be known at compile time is comparing apples and oranges. With that in mind, knowing the FFT size at compile time does give immense gains.
-
-![log](assets/log_comparison.png)
+Monarch Butterfly computes forward and inverse FFTs of 1 through 200 complex
+samples in `f32` or `f64`. The transform size is a const generic. Power-of-two
+sizes use iterative radix-2 stages with compile-time butterfly widths. Other
+sizes use mixed-radix stages whose lengths, radices, and strides are derived
+from `N` at compile time. The FFT twiddle factors are also computed at compile
+time. Prime stages pair inputs whose twiddle factors are complex conjugates.
+The library requires Rust 1.85 or newer, supports `no_std`, and uses stack
+storage without heap allocation or unsafe code.
 
 ## Usage
 
-The top level functions are `fft` and `ifft`.
+The top-level functions `fft` and `ifft` accept an array, slice, or vector
+of exactly `N` samples and return an array of length `N`.
 
 ```
-use monarch_butterfly::*;
+use monarch_butterfly::{fft, ifft};
 use num_complex::Complex;
 
 let input: Vec<_> = (0..8).map(|i| Complex::new(i as f32, 0.0)).collect();
-let output = fft::<8, _, _>(input);
+let spectrum = fft::<8, _, _>(input);
+let scaled_input = ifft::<8, _, _>(spectrum);
 ```
 
-This library will use all SIMD features your CPU has, assuming `rustc` can compile to those SIMD features.
+The inverse is unnormalized. Applying `ifft` to the result of `fft` scales
+the original samples by `N`.
 
-The larger the FFT sizes, the larger speed boost this library will give you.
-
-As an example of AVX512 instructions, here is an example on just an FFT
-of size 128: <https://godbolt.org/z/Y58eh1x5a> (`Ctrl+F` for "zmm" instructions)
-
-The FFTs before unrolling are heavily inspired from [RustFFT](https://github.com/ejmahler/RustFFT).
-Credit is given to Elliott Mahler as the RustFFT original author.
+The original FFT kernels were inspired by Elliott Mahler’s [RustFFT](https://github.com/ejmahler/RustFFT).

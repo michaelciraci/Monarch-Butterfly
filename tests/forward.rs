@@ -35,7 +35,7 @@ macro_rules! compare_against_rustfft {
             let mut p = rustfft::FftPlanner::new();
             let plan = p.plan_fft_forward($n);
             let mut buf: Vec<_> = (0..$n)
-                .map(|i| Complex::<f64>::new(i as f64 + 7.0, 3.0))
+                .map(|i| Complex::<f64>::new(i as f64 + 7.0, (i * i % 31) as f64))
                 .collect();
             let monarch = fft::<$n, _, _>(&buf);
             plan.process(&mut buf);
@@ -295,20 +295,65 @@ fn test_fft3() {
 }
 
 #[test]
+fn round_trip_complex_f32() {
+    let input: [Complex<f32>; 15] =
+        core::array::from_fn(|i| Complex::new((i % 7) as f32, (i % 3) as f32));
+    let spectrum = fft::<15, _, _>(&input[..]);
+    let output = ifft::<15, _, _>(spectrum);
+    for (actual, sample) in output.iter().zip(input) {
+        assert!((*actual - sample * 15.0).norm() < 1e-4);
+    }
+}
+
+#[test]
+fn radix2_128_matches_rustfft_in_both_directions() {
+    let input: [Complex<f32>; 128] = core::array::from_fn(|i| {
+        Complex::new(
+            (i * 11 % 31) as f32 / 16.0 - 1.0,
+            (i * i % 23) as f32 / 12.0 - 1.0,
+        )
+    });
+    let mut planner = rustfft::FftPlanner::new();
+    for (actual, plan) in [
+        (fft::<128, _, _>(input), planner.plan_fft_forward(128)),
+        (ifft::<128, _, _>(input), planner.plan_fft_inverse(128)),
+    ] {
+        let mut expected = input;
+        plan.process(&mut expected);
+        assert_slice_equal!(actual, expected);
+    }
+}
+
+#[test]
+fn prime_13_complex_impulse() {
+    let mut input = [Complex::new(0.0_f32, 0.0); 13];
+    input[5] = Complex::new(0.5, -1.0);
+    for (spectrum, sign) in [
+        (fft::<13, _, _>(input), -1.0),
+        (ifft::<13, _, _>(input), 1.0),
+    ] {
+        for (k, bin) in spectrum.iter().enumerate() {
+            let angle = sign * core::f64::consts::TAU * (5 * k) as f64 / 13.0;
+            let expected = Complex::new(0.5, -1.0) * Complex::from_polar(1.0, angle);
+            assert!((Complex::new(bin.re as f64, bin.im as f64) - expected).norm() < 2e-7);
+        }
+    }
+}
+
+#[test]
 fn test_butterfly_4() {
     assert_eq!(
         fft::<4, _, _>([
-            Complex::new(1.0, 0.0),
+            Complex::new(1.0_f32, 0.0),
             Complex::new(2.0, 0.0),
             Complex::new(3.0, 0.0),
             Complex::new(4.0, 0.0)
-        ])
-        .to_vec(),
-        butterfly(vec![
-            Complex::new(1.0, 0.0),
-            Complex::new(2.0, 0.0),
-            Complex::new(3.0, 0.0),
-            Complex::new(4.0, 0.0),
-        ])
+        ]),
+        [
+            Complex::new(10.0, 0.0),
+            Complex::new(-2.0, 2.0),
+            Complex::new(-2.0, 0.0),
+            Complex::new(-2.0, -2.0),
+        ]
     );
 }

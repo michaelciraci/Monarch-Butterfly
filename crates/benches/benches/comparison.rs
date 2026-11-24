@@ -26,7 +26,7 @@ macro_rules! generate_comparison {
 
         $c.bench_function(&format!("monarch-{}", $idx), |b| {
             b.iter(|| {
-                let _ = fft::<$idx, _, _>(black_box(input));
+                black_box(fft::<$idx, _, _>(black_box(input)));
             })
         });
 
