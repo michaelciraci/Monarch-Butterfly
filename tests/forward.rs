@@ -35,10 +35,19 @@ macro_rules! compare_against_rustfft {
             let mut p = rustfft::FftPlanner::new();
             let plan = p.plan_fft_forward($n);
             let mut buf: Vec<_> = (0..$n)
-                .map(|i| Complex::<f64>::new(i as f64 + 7.0, 3.0))
+                .map(|i| Complex::<f64>::new(i as f64 + 7.0, (i * i % 13) as f64 - 3.0))
                 .collect();
             let monarch = fft::<$n, _, _>(&buf);
             plan.process(&mut buf);
+            assert_slice_equal!(monarch, buf);
+
+            let mut buf: Vec<_> = (0..$n)
+                .map(|i| Complex::new((i % 19) as f32 / 19.0, (i * i % 13) as f32 / 13.0))
+                .collect();
+            let monarch = fft::<$n, _, _>(&buf);
+            rustfft::FftPlanner::new()
+                .plan_fft_forward($n)
+                .process(&mut buf);
             assert_slice_equal!(monarch, buf);
         }
     };
@@ -46,31 +55,31 @@ macro_rules! compare_against_rustfft {
 
 compare_against_rustfft!(forward_1, 1);
 compare_against_rustfft!(forward_2, 2);
-// compare_against_rustfft!(forward_3, 3);
+compare_against_rustfft!(forward_3, 3);
 compare_against_rustfft!(forward_4, 4);
 // compare_against_rustfft!(forward_5, 5);
-// compare_against_rustfft!(forward_6, 6);
+compare_against_rustfft!(forward_6, 6);
 // compare_against_rustfft!(forward_7, 7);
 compare_against_rustfft!(forward_8, 8);
-// compare_against_rustfft!(forward_9, 9);
+compare_against_rustfft!(forward_9, 9);
 // compare_against_rustfft!(forward_10, 10);
 // compare_against_rustfft!(forward_11, 11);
-// compare_against_rustfft!(forward_12, 12);
+compare_against_rustfft!(forward_12, 12);
 // compare_against_rustfft!(forward_13, 13);
 // compare_against_rustfft!(forward_14, 14);
 // compare_against_rustfft!(forward_15, 15);
 compare_against_rustfft!(forward_16, 16);
 // compare_against_rustfft!(forward_17, 17);
-// compare_against_rustfft!(forward_18, 18);
+compare_against_rustfft!(forward_18, 18);
 // compare_against_rustfft!(forward_19, 19);
 // compare_against_rustfft!(forward_20, 20);
 // compare_against_rustfft!(forward_21, 21);
 // compare_against_rustfft!(forward_22, 22);
 // compare_against_rustfft!(forward_23, 23);
-// compare_against_rustfft!(forward_24, 24);
+compare_against_rustfft!(forward_24, 24);
 // compare_against_rustfft!(forward_25, 25);
 // compare_against_rustfft!(forward_26, 26);
-// compare_against_rustfft!(forward_27, 27);
+compare_against_rustfft!(forward_27, 27);
 // compare_against_rustfft!(forward_28, 28);
 // compare_against_rustfft!(forward_29, 29);
 // compare_against_rustfft!(forward_30, 30);
@@ -79,7 +88,7 @@ compare_against_rustfft!(forward_32, 32);
 // compare_against_rustfft!(forward_33, 33);
 // compare_against_rustfft!(forward_34, 34);
 // compare_against_rustfft!(forward_35, 35);
-// compare_against_rustfft!(forward_36, 36);
+compare_against_rustfft!(forward_36, 36);
 // compare_against_rustfft!(forward_37, 37);
 // compare_against_rustfft!(forward_38, 38);
 // compare_against_rustfft!(forward_39, 39);
@@ -91,13 +100,13 @@ compare_against_rustfft!(forward_32, 32);
 // compare_against_rustfft!(forward_45, 45);
 // compare_against_rustfft!(forward_46, 46);
 // compare_against_rustfft!(forward_47, 47);
-// compare_against_rustfft!(forward_48, 48);
+compare_against_rustfft!(forward_48, 48);
 // compare_against_rustfft!(forward_49, 49);
 // compare_against_rustfft!(forward_50, 50);
 // compare_against_rustfft!(forward_51, 51);
 // compare_against_rustfft!(forward_52, 52);
 // compare_against_rustfft!(forward_53, 53);
-// compare_against_rustfft!(forward_54, 54);
+compare_against_rustfft!(forward_54, 54);
 // compare_against_rustfft!(forward_55, 55);
 // compare_against_rustfft!(forward_56, 56);
 // compare_against_rustfft!(forward_57, 57);
@@ -107,7 +116,7 @@ compare_against_rustfft!(forward_32, 32);
 // compare_against_rustfft!(forward_61, 61);
 // compare_against_rustfft!(forward_62, 62);
 // compare_against_rustfft!(forward_63, 63);
-// compare_against_rustfft!(forward_64, 64);
+compare_against_rustfft!(forward_64, 64);
 // compare_against_rustfft!(forward_65, 65);
 // compare_against_rustfft!(forward_66, 66);
 // compare_against_rustfft!(forward_67, 67);
@@ -115,7 +124,7 @@ compare_against_rustfft!(forward_32, 32);
 // compare_against_rustfft!(forward_69, 69);
 // compare_against_rustfft!(forward_70, 70);
 // compare_against_rustfft!(forward_71, 71);
-// compare_against_rustfft!(forward_72, 72);
+compare_against_rustfft!(forward_72, 72);
 // compare_against_rustfft!(forward_73, 73);
 // compare_against_rustfft!(forward_74, 74);
 // compare_against_rustfft!(forward_75, 75);
@@ -124,7 +133,7 @@ compare_against_rustfft!(forward_32, 32);
 // compare_against_rustfft!(forward_78, 78);
 // compare_against_rustfft!(forward_79, 79);
 // compare_against_rustfft!(forward_80, 80);
-// compare_against_rustfft!(forward_81, 81);
+compare_against_rustfft!(forward_81, 81);
 // compare_against_rustfft!(forward_82, 82);
 // compare_against_rustfft!(forward_83, 83);
 // compare_against_rustfft!(forward_84, 84);
@@ -139,7 +148,7 @@ compare_against_rustfft!(forward_32, 32);
 // compare_against_rustfft!(forward_93, 93);
 // compare_against_rustfft!(forward_94, 94);
 // compare_against_rustfft!(forward_95, 95);
-// compare_against_rustfft!(forward_96, 96);
+compare_against_rustfft!(forward_96, 96);
 // compare_against_rustfft!(forward_97, 97);
 // compare_against_rustfft!(forward_98, 98);
 // compare_against_rustfft!(forward_99, 99);
@@ -151,7 +160,7 @@ compare_against_rustfft!(forward_32, 32);
 // compare_against_rustfft!(forward_105, 105);
 // compare_against_rustfft!(forward_106, 106);
 // compare_against_rustfft!(forward_107, 107);
-// compare_against_rustfft!(forward_108, 108);
+compare_against_rustfft!(forward_108, 108);
 // compare_against_rustfft!(forward_109, 109);
 // compare_against_rustfft!(forward_110, 110);
 // compare_against_rustfft!(forward_111, 111);
@@ -171,7 +180,7 @@ compare_against_rustfft!(forward_32, 32);
 // compare_against_rustfft!(forward_125, 125);
 // compare_against_rustfft!(forward_126, 126);
 // compare_against_rustfft!(forward_127, 127);
-// compare_against_rustfft!(forward_128, 128);
+compare_against_rustfft!(forward_128, 128);
 // compare_against_rustfft!(forward_129, 129);
 // compare_against_rustfft!(forward_130, 130);
 // compare_against_rustfft!(forward_131, 131);
@@ -187,7 +196,7 @@ compare_against_rustfft!(forward_32, 32);
 // compare_against_rustfft!(forward_141, 141);
 // compare_against_rustfft!(forward_142, 142);
 // compare_against_rustfft!(forward_143, 143);
-// compare_against_rustfft!(forward_144, 144);
+compare_against_rustfft!(forward_144, 144);
 // compare_against_rustfft!(forward_145, 145);
 // compare_against_rustfft!(forward_146, 146);
 // compare_against_rustfft!(forward_147, 147);
@@ -205,7 +214,7 @@ compare_against_rustfft!(forward_32, 32);
 // compare_against_rustfft!(forward_159, 159);
 // compare_against_rustfft!(forward_160, 160);
 // compare_against_rustfft!(forward_161, 161);
-// compare_against_rustfft!(forward_162, 162);
+compare_against_rustfft!(forward_162, 162);
 // compare_against_rustfft!(forward_163, 163);
 // compare_against_rustfft!(forward_164, 164);
 // compare_against_rustfft!(forward_165, 165);
@@ -235,7 +244,7 @@ compare_against_rustfft!(forward_32, 32);
 // compare_against_rustfft!(forward_189, 189);
 // compare_against_rustfft!(forward_190, 190);
 // compare_against_rustfft!(forward_191, 191);
-// compare_against_rustfft!(forward_192, 192);
+compare_against_rustfft!(forward_192, 192);
 // compare_against_rustfft!(forward_193, 193);
 // compare_against_rustfft!(forward_194, 194);
 // compare_against_rustfft!(forward_195, 195);
@@ -244,6 +253,25 @@ compare_against_rustfft!(forward_32, 32);
 // compare_against_rustfft!(forward_198, 198);
 // compare_against_rustfft!(forward_199, 199);
 // compare_against_rustfft!(forward_200, 200);
+
+// Exercise the iterative fallback above the generated kernels' size range.
+compare_against_rustfft!(forward_216, 216);
+compare_against_rustfft!(forward_243, 243);
+compare_against_rustfft!(forward_256, 256);
+
+// Exercise multiple high exponent bits as well as the low twiddle table.
+#[test]
+fn forward_19683() {
+    const N: usize = 19683;
+    let mut input: Vec<_> = (0..N)
+        .map(|i| Complex::new((i % 19) as f32, (i % 13) as f32) / N as f32)
+        .collect();
+    let output = fft::<N, _, _>(&input);
+    rustfft::FftPlanner::new()
+        .plan_fft_forward(N)
+        .process(&mut input);
+    assert_slice_equal!(output, input);
+}
 
 // fn butterfly(x: Vec<Complex<f32>>) -> Vec<Complex<f32>> {
 //     let n = x.len();

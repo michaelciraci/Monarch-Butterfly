@@ -1,9 +1,6 @@
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
-use fftw::{
-    array::AlignedVec,
-    plan::{C2CPlan, C2CPlan32},
-    types::{Flag, Sign},
-};
+use std::hint::black_box;
+
+use criterion::{Criterion, criterion_group, criterion_main};
 use monarch_butterfly::*;
 use num_complex::Complex;
 use rustfft::FftPlanner;
@@ -18,7 +15,8 @@ macro_rules! generate_comparison {
 
         $c.bench_function(&format!("rustfft-{}", $idx), |b| {
             b.iter(|| {
-                p.process_with_scratch(&mut input, &mut scratch);
+                p.process_with_scratch(black_box(input.as_mut_slice()), &mut scratch);
+                black_box(&input[..]);
             })
         });
 
@@ -26,20 +24,23 @@ macro_rules! generate_comparison {
 
         $c.bench_function(&format!("monarch-{}", $idx), |b| {
             b.iter(|| {
-                let _ = fft::<$idx, _, _>(black_box(input));
+                black_box(fft::<$idx, _, _>(black_box(&input)));
             })
         });
 
-        let n = $idx;
-        let mut plan: C2CPlan32 = C2CPlan::aligned(&[n], Sign::Forward, Flag::MEASURE).unwrap();
-        let mut a = AlignedVec::new(n);
-        let mut o = AlignedVec::new(n);
+        // use fftw::array::AlignedVec;
+        // use fftw::plan::{C2CPlan, C2CPlan32};
+        // use fftw::types::{Flag, Sign};
+        // let n = $idx;
+        // let mut plan: C2CPlan32 = C2CPlan::aligned(&[n], Sign::Forward, Flag::MEASURE).unwrap();
+        // let mut a = AlignedVec::new(n);
+        // let mut o = AlignedVec::new(n);
 
-        $c.bench_function(&format!("fftw-{}", $idx), |b| {
-            b.iter(|| {
-                plan.c2c(&mut a, &mut o).unwrap();
-            })
-        });
+        // $c.bench_function(&format!("fftw-{}", $idx), |b| {
+        //     b.iter(|| {
+        //         plan.c2c(&mut a, &mut o).unwrap();
+        //     })
+        // });
     }};
 }
 
@@ -55,7 +56,7 @@ fn compare(c: &mut Criterion) {
     // generate_comparison!(9, c);
     // generate_comparison!(10, c);
     // generate_comparison!(11, c);
-    // generate_comparison!(12, c);
+    generate_comparison!(12, c);
     // generate_comparison!(13, c);
     // generate_comparison!(14, c);
     // generate_comparison!(15, c);
@@ -67,10 +68,10 @@ fn compare(c: &mut Criterion) {
     // generate_comparison!(21, c);
     // generate_comparison!(22, c);
     // generate_comparison!(23, c);
-    // generate_comparison!(24, c);
+    generate_comparison!(24, c);
     // generate_comparison!(25, c);
     // generate_comparison!(26, c);
-    // generate_comparison!(27, c);
+    generate_comparison!(27, c);
     // generate_comparison!(28, c);
     // generate_comparison!(29, c);
     // generate_comparison!(30, c);
@@ -107,7 +108,7 @@ fn compare(c: &mut Criterion) {
     // generate_comparison!(61, c);
     // generate_comparison!(62, c);
     // generate_comparison!(63, c);
-    // generate_comparison!(64, c);
+    generate_comparison!(64, c);
     // generate_comparison!(65, c);
     // generate_comparison!(66, c);
     // generate_comparison!(67, c);
@@ -139,7 +140,7 @@ fn compare(c: &mut Criterion) {
     // generate_comparison!(93, c);
     // generate_comparison!(94, c);
     // generate_comparison!(95, c);
-    // generate_comparison!(96, c);
+    generate_comparison!(96, c);
     // generate_comparison!(97, c);
     // generate_comparison!(98, c);
     // generate_comparison!(99, c);
@@ -171,7 +172,7 @@ fn compare(c: &mut Criterion) {
     // generate_comparison!(125, c);
     // generate_comparison!(126, c);
     // generate_comparison!(127, c);
-    // generate_comparison!(128, c);
+    generate_comparison!(128, c);
     // generate_comparison!(129, c);
     // generate_comparison!(130, c);
     // generate_comparison!(131, c);
@@ -235,7 +236,7 @@ fn compare(c: &mut Criterion) {
     // generate_comparison!(189, c);
     // generate_comparison!(190, c);
     // generate_comparison!(191, c);
-    // generate_comparison!(192, c);
+    generate_comparison!(192, c);
     // generate_comparison!(193, c);
     // generate_comparison!(194, c);
     // generate_comparison!(195, c);

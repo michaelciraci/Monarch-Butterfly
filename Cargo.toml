@@ -7,7 +7,7 @@ license = "MIT"
 documentation = "https://docs.rs/monarch-butterfly"
 homepage = "https://github.com/michaelciraci/Monarch-Butterfly"
 repository = "https://github.com/michaelciraci/Monarch-Butterfly"
-rust-version = "1.63"
+rust-version = "1.85"
 keywords = ["fft", "dft", "discrete", "fourier", "no_std"]
 categories = ["algorithms", "science"]
 exclude = ["assets/", ".*"]
@@ -15,6 +15,7 @@ exclude = ["assets/", ".*"]
 [dependencies]
 num-complex = { version = "0.4", default-features = false, features = ["libm"] }
 num-traits = { version = "0.2", default-features = false, features = ["libm"] }
+trig-const = { version = "0.4.2", default-features = false }
 
 [dev-dependencies]
 rustfft = "6.2.0"
