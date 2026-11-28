@@ -1,5 +1,4 @@
 [![Build](https://github.com/michaelciraci/Monarch-Butterfly/actions/workflows/rust.yml/badge.svg)](https://github.com/michaelciraci/Monarch-Butterfly/actions/workflows/rust.yml)
-[![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 [![](https://img.shields.io/crates/v/monarch-butterfly)](https://crates.io/crates/monarch-butterfly)
 [![](https://docs.rs/monarch-butterfly/badge.svg)](https://docs.rs/monarch-butterfly/)
 
@@ -14,7 +13,10 @@ time. Selected prime lengths use Rader's algorithm with compile-time
 permutations and convolution coefficients. The direct prime kernel pairs
 inputs whose twiddle factors are complex conjugates.
 The library requires Rust 1.85 or newer, supports `no_std`, and uses stack
-storage without heap allocation or unsafe code.
+storage without heap allocation. The 8-point FFT uses NEON on little-endian
+AArch64 and SSE2 on x86-64 when enabled for the target. Both backends support
+`f32` and `f64` and share a portable scalar fallback. The crate's unsafe code
+is confined to the SIMD module.
 
 ## Usage
 
@@ -32,5 +34,8 @@ let scaled_input = ifft::<8, _, _>(spectrum);
 
 The inverse is unnormalized. Applying `ifft` to the result of `fft` scales
 the original samples by `N`.
+
+Enable the optional `std` Cargo feature to use fused multiply-add in larger
+direct prime butterflies when the compilation target supports hardware FMA.
 
 The original FFT kernels were inspired by Elliott Mahler’s [RustFFT](https://github.com/ejmahler/RustFFT).

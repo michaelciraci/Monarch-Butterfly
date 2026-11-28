@@ -1,5 +1,5 @@
 #![doc = include_str!("../README.md")]
-#![forbid(unsafe_code)]
+#![deny(unsafe_code, unsafe_op_in_unsafe_fn)]
 #![no_std]
 
 use num_complex::Complex;
@@ -8,6 +8,16 @@ use num_traits::{Float, FloatConst};
 mod fixed;
 mod power2;
 mod rader;
+#[cfg(any(
+    all(
+        target_arch = "aarch64",
+        target_endian = "little",
+        target_feature = "neon"
+    ),
+    all(target_arch = "x86_64", target_feature = "sse2")
+))]
+#[allow(unsafe_code)]
+mod simd;
 
 const MAX_FFT_LEN: usize = 200;
 
@@ -15,14 +25,39 @@ const MAX_FFT_LEN: usize = 200;
 pub fn fft<const N: usize, T: Float + FloatConst, A: AsRef<[Complex<T>]>>(
     input: A,
 ) -> [Complex<T>; N] {
-    transform::<N, false, _>(input.as_ref())
+    dispatch::<N, false, _>(input.as_ref())
 }
 
 /// Computes the unnormalized inverse FFT of exactly `N` samples, for `1 <= N <= 200`.
 pub fn ifft<const N: usize, T: Float + FloatConst, A: AsRef<[Complex<T>]>>(
     input: A,
 ) -> [Complex<T>; N] {
-    transform::<N, true, _>(input.as_ref())
+    dispatch::<N, true, _>(input.as_ref())
+}
+
+#[inline(always)]
+fn dispatch<const N: usize, const INVERSE: bool, T: Float>(
+    input: &[Complex<T>],
+) -> [Complex<T>; N] {
+    #[cfg(any(
+        all(
+            target_arch = "aarch64",
+            target_endian = "little",
+            target_feature = "neon"
+        ),
+        all(target_arch = "x86_64", target_feature = "sse2")
+    ))]
+    if const { N == 8 } {
+        if let Some(output) = input
+            .try_into()
+            .ok()
+            .and_then(simd::try_fft8::<N, INVERSE, T>)
+        {
+            return output;
+        }
+    }
+
+    transform::<N, INVERSE, T>(input)
 }
 
 fn transform<const N: usize, const INVERSE: bool, T: Float>(
@@ -189,6 +224,16 @@ fn fft_stage<
         let (even, odd) = scratch.split_at_mut(half);
         even.fill(input[0]);
         odd[..half].fill(Complex::new(T::zero(), T::zero()));
+        // Small leaves can regress with fusion. The std backend lets LLVM
+        // lower mul_add directly on targets with hardware FMA.
+        let fuse = len >= 47
+            && cfg!(all(
+                feature = "std",
+                any(
+                    all(target_arch = "aarch64", target_feature = "neon"),
+                    target_feature = "fma"
+                )
+            ));
         let mut dc = input[0];
         for r in 1..=half {
             let a = input[r * stride];
@@ -198,8 +243,17 @@ fn fft_stage<
             dc = dc + sum;
             for k in 0..half {
                 let root = roots[(r * (k + 1) % len) * stride];
-                even[k] = even[k] + sum * root.re;
-                odd[k] = odd[k] + diff * root.im;
+                if fuse {
+                    let even = &mut even[k];
+                    let odd = &mut odd[k];
+                    even.re = sum.re.mul_add(root.re, even.re);
+                    even.im = sum.im.mul_add(root.re, even.im);
+                    odd.re = diff.re.mul_add(root.im, odd.re);
+                    odd.im = diff.im.mul_add(root.im, odd.im);
+                } else {
+                    even[k] = even[k] + sum * root.re;
+                    odd[k] = odd[k] + diff * root.im;
+                }
             }
         }
         output[0] = dc;

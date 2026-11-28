@@ -3,7 +3,7 @@ use core::array::from_fn;
 use num_complex::Complex;
 use num_traits::Float;
 
-use crate::{power2, twiddle, Roots};
+use crate::{twiddle, Roots};
 
 const COLS: usize = 8;
 
@@ -105,27 +105,6 @@ fn finish_column<
             ]);
             from_fn(|i| bins[i])
         }
-        16 => {
-            let bins = power2::fft16::<INVERSE, _>([
-                column[0],
-                rotate(1),
-                rotate(2),
-                rotate(3),
-                rotate(4),
-                rotate(5),
-                rotate(6),
-                rotate(7),
-                rotate(8),
-                rotate(9),
-                rotate(10),
-                rotate(11),
-                rotate(12),
-                rotate(13),
-                rotate(14),
-                rotate(15),
-            ]);
-            from_fn(|i| bins[i])
-        }
         _ => unreachable!(),
     }
 }
@@ -186,11 +165,15 @@ fn fft6<const INVERSE: bool, T: Float>(x: [Complex<T>; 6]) -> [Complex<T>; 6] {
 pub(super) fn fft8<const INVERSE: bool, T: Float>(input: [Complex<T>; 8]) -> [Complex<T>; 8] {
     let [a, b, c, d, e, f, g, h] = input;
     let even = fft4::<INVERSE, _>([a + e, b + f, c + g, d + h]);
+    // The eighth roots at bins 1 and 3 have equal-magnitude components.
+    let scale = T::from(core::f64::consts::FRAC_1_SQRT_2).unwrap();
+    let odd_one = (b - f) * scale;
+    let odd_three = (d - h) * scale;
     let odd = fft4::<INVERSE, _>([
         a - e,
-        (b - f) * twiddle::<INVERSE, T>(Roots::<8>::FULL[1]),
+        odd_one + quarter_turn::<INVERSE, _>(odd_one),
         quarter_turn::<INVERSE, _>(c - g),
-        (d - h) * twiddle::<INVERSE, T>(Roots::<8>::FULL[3]),
+        quarter_turn::<INVERSE, _>(odd_three) - odd_three,
     ]);
     [
         even[0], odd[0], even[1], odd[1], even[2], odd[2], even[3], odd[3],
@@ -237,7 +220,7 @@ pub(super) fn fft4<const INVERSE: bool, T: Float>(input: [Complex<T>; 4]) -> [Co
 }
 
 #[inline(always)]
-fn quarter_turn<const INVERSE: bool, T: Float>(x: Complex<T>) -> Complex<T> {
+pub(super) fn quarter_turn<const INVERSE: bool, T: Float>(x: Complex<T>) -> Complex<T> {
     if INVERSE {
         Complex::new(-x.im, x.re)
     } else {
