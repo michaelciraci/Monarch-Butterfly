@@ -6,16 +6,26 @@ use num_traits::FloatConst;
 use super::*;
 use crate::{fft, fixed, ifft};
 
-fn check<T: Float + FloatConst + Debug>(input: [Complex<T>; 8]) {
+fn scalar_fft<const N: usize, const I: bool, T: Float>(input: [Complex<T>; N]) -> [Complex<T>; N] {
+    if N == 5 {
+        let bins = fixed::fft5::<I, _>(from_fn(|i| input[i]));
+        from_fn(|i| bins[i])
+    } else {
+        let bins = fixed::fft8::<I, _>(from_fn(|i| input[i]));
+        from_fn(|i| bins[i])
+    }
+}
+
+fn check<const N: usize, T: Float + FloatConst + Debug>(input: [Complex<T>; N]) {
     let simd = [
-        try_fft8::<8, false, _>(&input).unwrap(),
-        try_fft8::<8, true, _>(&input).unwrap(),
+        try_fft::<N, false, _>(&input).unwrap(),
+        try_fft::<N, true, _>(&input).unwrap(),
     ];
     let scalar = [
-        fixed::fft8::<false, _>(input),
-        fixed::fft8::<true, _>(input),
+        scalar_fft::<N, false, _>(input),
+        scalar_fft::<N, true, _>(input),
     ];
-    let public = [fft::<8, _, _>(&input), ifft::<8, _, _>(&input)];
+    let public = [fft::<N, _, _>(&input), ifft::<N, _, _>(&input)];
     for ((simd, scalar), public) in simd.into_iter().zip(scalar).zip(public) {
         for ((a, b), c) in simd.into_iter().zip(scalar).zip(public) {
             for (a, b, c) in [(a.re, b.re, c.re), (a.im, b.im, c.im)] {
@@ -32,9 +42,9 @@ fn check<T: Float + FloatConst + Debug>(input: [Complex<T>; 8]) {
     }
 }
 
-fn check_inputs<T: Float + FloatConst + Debug>() {
+fn check_inputs<const N: usize, T: Float + FloatConst + Debug>() {
     let zero = Complex::new(T::zero(), T::zero());
-    for index in 0..8 {
+    for index in 0..N {
         for value in [
             T::one(),
             -T::zero(),
@@ -46,7 +56,7 @@ fn check_inputs<T: Float + FloatConst + Debug>() {
                 Complex::new(value, T::zero()),
                 Complex::new(T::zero(), value),
             ] {
-                let mut input = [zero; 8];
+                let mut input = [zero; N];
                 input[index] = impulse;
                 check(input);
             }
@@ -66,7 +76,7 @@ fn check_inputs<T: Float + FloatConst + Debug>() {
         T::max_value() / T::from(64).unwrap(),
     ] {
         for _ in 0..128 {
-            check(from_fn(|_| {
+            check::<N, _>(from_fn(|_| {
                 Complex::new(sample() * scale, sample() * scale)
             }));
         }
@@ -75,41 +85,44 @@ fn check_inputs<T: Float + FloatConst + Debug>() {
 
 #[test]
 fn both_precisions_match_scalar_for_impulses_special_values_and_random_inputs() {
-    check_inputs::<f32>();
-    check_inputs::<f64>();
+    check_inputs::<5, f32>();
+    check_inputs::<8, f32>();
+    check_inputs::<8, f64>();
 }
 
-fn unaligned<P: Pair<Scalar = T>, T: Float + Debug>() {
+fn unaligned<const N: usize, T: Float + Debug>(write: unsafe fn(*const T, *mut T)) {
     #[repr(C, align(16))]
-    struct Guarded<T>(T, [Complex<T>; 8], T);
+    struct Guarded<T, const N: usize>(T, [Complex<T>; N], T);
 
     let guard = T::one();
-    let input = Guarded(
+    let input: Guarded<T, N> = Guarded(
         guard,
         from_fn(|i| Complex::new(T::from(i).unwrap(), -guard)),
         guard,
     );
-    let mut output = Guarded(guard, [Complex::new(T::zero(), T::zero()); 8], guard);
+    let mut output = Guarded(guard, [Complex::new(T::zero(), T::zero()); N], guard);
     let src = ptr::from_ref(&input.1);
     let dst = ptr::from_mut(&mut output.1);
     assert_ne!(src.addr() % 16, 0);
     assert_ne!(dst.addr() % 16, 0);
-    // SAFETY: The disjoint f32/f64 arrays each have sixteen scalar lanes.
-    unsafe { write_fft8::<false, P>(src.cast(), dst.cast()) };
-    assert_eq!(output.1, fixed::fft8::<false, _>(input.1));
+    // SAFETY: N is 5 or 8, and each disjoint array has 2 * N scalar lanes.
+    unsafe { write(src.cast(), dst.cast()) };
+    assert_eq!(output.1, scalar_fft::<N, false, _>(input.1));
     assert_eq!((output.0, output.2), (guard, guard));
 }
 
 #[test]
 fn unaligned_loads_and_stores_preserve_guards() {
-    unaligned::<arch::F32Pair, f32>();
-    unaligned::<F64Pair, f64>();
+    unaligned::<5, _>(write_fft5::<false>);
+    unaligned::<8, _>(write_fft8::<false, arch::F32Pair>);
+    unaligned::<8, _>(write_fft8::<false, F64Pair>);
 }
 
 #[test]
 fn dispatch_validates_length() {
     let input = [Complex::new(0.0_f32, 0.0); 9];
-    assert!(try_fft8::<9, false, _>(&input).is_none());
+    assert!(try_fft::<9, false, _>(&input).is_none());
+    assert!(try_fft::<5, false, _>(&[Complex::new(0.0_f64, 0.0); 5]).is_none());
     assert!(std::panic::catch_unwind(|| fft::<8, _, _>(&input[..7])).is_err());
     assert!(std::panic::catch_unwind(|| ifft::<8, _, _>(&input)).is_err());
 }

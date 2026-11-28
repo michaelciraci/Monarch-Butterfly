@@ -8,11 +8,11 @@ use crate::{twiddle, Roots};
 const COLS: usize = 8;
 
 pub(super) const fn has_butterfly(radix: usize) -> bool {
-    matches!(radix, 3 | 6)
+    matches!(radix, 3 | 5 | 6)
 }
 
 #[inline(always)]
-pub(super) fn butterfly<const INVERSE: bool, T: Float>(
+pub(super) fn butterfly<const INVERSE: bool, const LEAF: bool, T: Float>(
     radix: usize,
     mut sample: impl FnMut(usize) -> Complex<T>,
     store: impl FnMut(usize, Complex<T>),
@@ -25,6 +25,24 @@ pub(super) fn butterfly<const INVERSE: bool, T: Float>(
 
     match radix {
         3 => write(fft3::<INVERSE, _>(from_fn(&mut sample)), store),
+        5 => {
+            let samples = from_fn(&mut sample);
+            #[cfg(any(
+                all(
+                    target_arch = "aarch64",
+                    target_endian = "little",
+                    target_feature = "neon"
+                ),
+                all(target_arch = "x86_64", target_feature = "sse2")
+            ))]
+            if LEAF {
+                if let Some(bins) = crate::simd::try_fft::<5, INVERSE, _>(&samples) {
+                    write(bins, store);
+                    return;
+                }
+            }
+            write(fft5::<INVERSE, _>(samples), store);
+        }
         6 => write(fft6::<INVERSE, _>(from_fn(&mut sample)), store),
         _ => unreachable!(),
     }
@@ -202,6 +220,37 @@ fn fft3<const INVERSE: bool, T: Float>(input: [Complex<T>; 3]) -> [Complex<T>; 3
     let midpoint = a - sum * T::from(0.5).unwrap();
     let skew = quarter_turn::<INVERSE, _>(b - c) * T::from(0.866_025_403_784_438_6).unwrap();
     [a + sum, midpoint + skew, midpoint - skew]
+}
+
+#[inline(always)]
+pub(super) fn fft5<const INVERSE: bool, T: Float>(
+    [a, b, c, d, e]: [Complex<T>; 5],
+) -> [Complex<T>; 5] {
+    let p = b + e;
+    let q = c + d;
+    let r = b - e;
+    let s = c - d;
+    let [cos1, cos2, sin1, sin2] = radix5_coefficients::<T>();
+
+    // Conjugate twiddles share their cosine terms in bins k and 5 - k.
+    let even1 = a + p * cos1 + q * cos2;
+    let even2 = a + p * cos2 + q * cos1;
+    let odd1 = quarter_turn::<INVERSE, _>(r * sin1 + s * sin2);
+    let odd2 = quarter_turn::<INVERSE, _>(r * sin2 - s * sin1);
+    [
+        a + p + q,
+        even1 + odd1,
+        even2 + odd2,
+        even2 - odd2,
+        even1 - odd1,
+    ]
+}
+
+#[inline(always)]
+pub(super) fn radix5_coefficients<T: Float>() -> [T; 4] {
+    let w1 = Roots::<5>::FULL[1];
+    let w2 = Roots::<5>::FULL[2];
+    [w1.re, w2.re, w1.im, w2.im].map(|x| T::from(x).unwrap())
 }
 
 #[inline(always)]

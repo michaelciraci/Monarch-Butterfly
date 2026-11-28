@@ -11,12 +11,12 @@ mod arch;
 mod tests;
 
 #[inline(always)]
-pub(super) fn try_fft8<const N: usize, const INVERSE: bool, T: Float>(
+pub(super) fn try_fft<const N: usize, const INVERSE: bool, T: Float>(
     input: &[Complex<T>; N],
 ) -> Option<[Complex<T>; N]> {
     let id = typeid::of::<T>();
     let single = id == TypeId::of::<f32>();
-    if N != 8 || (!single && id != TypeId::of::<f64>()) {
+    if !matches!(N, 5 | 8) || (!single && (N != 8 || id != TypeId::of::<f64>())) {
         return None;
     }
 
@@ -24,10 +24,12 @@ pub(super) fn try_fft8<const N: usize, const INVERSE: bool, T: Float>(
     let src = ptr::from_ref(input);
     let dst = ptr::from_mut(&mut output);
     // SAFETY: The type check identifies the exact primitive (neither
-    // contains lifetimes). Each repr(C) complex array has sixteen contiguous
-    // scalars of that type. Input and output are disjoint.
+    // contains lifetimes). Each repr(C) complex array has 2 * N contiguous
+    // scalars of that type. Input and output are disjoint, and N is 5 or 8.
     unsafe {
-        if single {
+        if N == 5 {
+            write_fft5::<INVERSE>(src.cast(), dst.cast());
+        } else if single {
             write_fft8::<INVERSE, arch::F32Pair>(src.cast(), dst.cast());
         } else {
             write_fft8::<INVERSE, F64Pair>(src.cast(), dst.cast());
@@ -47,6 +49,39 @@ trait Pair: Copy {
     fn turn<const INVERSE: bool>(self) -> Self;
     fn diagonals<const INVERSE: bool>(self) -> Self;
     fn join<const LEFT: usize, const RIGHT: usize>(self, rhs: Self) -> Self;
+}
+
+/// Both pointers must cover ten scalars in disjoint buffers.
+#[inline(always)]
+unsafe fn write_fft5<const I: bool>(src: *const f32, dst: *mut f32) {
+    use arch::F32Pair;
+
+    // SAFETY: All three loads fit the ten input scalars.
+    let (base, bc, de) = unsafe {
+        (
+            F32Pair::load(src),
+            F32Pair::load(src.add(2)),
+            F32Pair::load(src.add(6)),
+        )
+    };
+    let a = base.join::<0, 0>(base);
+    let ed = de.join::<1, 0>(de);
+    let sum = bc.add(ed);
+    let diff = bc.sub(ed);
+    let (p, q) = (sum.join::<0, 0>(sum), sum.join::<1, 1>(sum));
+    let (r, s) = (diff.join::<0, 0>(diff), diff.join::<1, 1>(diff));
+    let [cos1, cos2, sin1, sin2] = crate::fixed::radix5_coefficients::<f32>();
+
+    // Calculate bins 1 and 2 together, then their conjugate-twiddle partners.
+    let even = a.add(p.scale(cos1, cos2)).add(q.scale(cos2, cos1));
+    let odd = r.scale(sin1, sin2).add(s.scale(sin2, -sin1)).turn::<I>();
+    let upper = even.sub(odd);
+    // SAFETY: These stores cover bins 0, 1–2, and 3–4 respectively.
+    unsafe {
+        a.add(p).add(q).store_first(dst);
+        even.add(odd).store(dst.add(2));
+        upper.join::<1, 0>(upper).store(dst.add(6));
+    }
 }
 
 /// Both pointers must cover sixteen scalars in disjoint buffers.

@@ -7,6 +7,19 @@ use super::Pair;
 #[derive(Clone, Copy)]
 pub(super) struct F32Pair(__m128);
 
+impl F32Pair {
+    #[inline(always)]
+    pub(super) unsafe fn store_first(self, dst: *mut f32) {
+        // SAFETY: The caller supplied two writable scalars (eight bytes).
+        unsafe { _mm_storel_epi64(dst.cast(), _mm_castps_si128(self.0)) }
+    }
+
+    #[inline(always)]
+    pub(super) fn scale(self, left: f32, right: f32) -> Self {
+        unsafe { Self(_mm_mul_ps(self.0, _mm_setr_ps(left, left, right, right))) }
+    }
+}
+
 impl Pair for F32Pair {
     type Scalar = f32;
 

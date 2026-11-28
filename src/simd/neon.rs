@@ -10,6 +10,25 @@ const SIGN64: u64 = 1 << 63;
 #[derive(Clone, Copy)]
 pub(super) struct F32Pair(float32x4_t);
 
+impl F32Pair {
+    #[inline(always)]
+    pub(super) unsafe fn store_first(self, dst: *mut f32) {
+        // SAFETY: The caller supplied two writable scalars.
+        unsafe { vst1_f32(dst, vget_low_f32(self.0)) }
+    }
+
+    #[inline(always)]
+    pub(super) fn scale(self, left: f32, right: f32) -> Self {
+        // SAFETY: The multiplier has four initialized lanes and NEON is enabled.
+        unsafe {
+            Self(vmulq_f32(
+                self.0,
+                vld1q_f32([left, left, right, right].as_ptr()),
+            ))
+        }
+    }
+}
+
 impl Pair for F32Pair {
     type Scalar = f32;
 

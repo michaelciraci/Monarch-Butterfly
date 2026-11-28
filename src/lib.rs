@@ -47,14 +47,21 @@ fn dispatch<const N: usize, const INVERSE: bool, T: Float>(
         ),
         all(target_arch = "x86_64", target_feature = "sse2")
     ))]
-    if const { N == 8 } {
+    if const { matches!(N, 5 | 8) } {
         if let Some(output) = input
             .try_into()
             .ok()
-            .and_then(simd::try_fft8::<N, INVERSE, T>)
+            .and_then(simd::try_fft::<N, INVERSE, T>)
         {
             return output;
         }
+    }
+
+    if const { matches!(N, 3 | 5) } {
+        assert_eq!(input.len(), N);
+        let mut output = [Complex::new(T::zero(), T::zero()); N];
+        fixed::butterfly::<INVERSE, false, _>(N, |i| input[i], |i, bin| output[i] = bin);
+        return output;
     }
 
     transform::<N, INVERSE, T>(input)
@@ -214,7 +221,11 @@ fn fft_stage<
         return;
     }
     if len == radix && fixed::has_butterfly(radix) {
-        fixed::butterfly::<INVERSE, _>(radix, |i| input[i * stride], |i, bin| output[i] = bin);
+        fixed::butterfly::<INVERSE, true, _>(
+            radix,
+            |i| input[i * stride],
+            |i, bin| output[i] = bin,
+        );
         return;
     }
     if len == radix {
@@ -294,7 +305,7 @@ fn fft_stage<
     } else if fixed::has_butterfly(radix) {
         // Each column is a radix-point FFT after rotation by the stage twiddles.
         for k in 0..width {
-            fixed::butterfly::<INVERSE, _>(
+            fixed::butterfly::<INVERSE, false, _>(
                 radix,
                 |row| {
                     let value = scratch[row * width + k];

@@ -13,10 +13,10 @@ time. Selected prime lengths use Rader's algorithm with compile-time
 permutations and convolution coefficients. The direct prime kernel pairs
 inputs whose twiddle factors are complex conjugates.
 The library requires Rust 1.85 or newer, supports `no_std`, and uses stack
-storage without heap allocation. The 8-point FFT uses NEON on little-endian
-AArch64 and SSE2 on x86-64 when enabled for the target. Both backends support
-`f32` and `f64` and share a portable scalar fallback. The crate's unsafe code
-is confined to the SIMD module.
+storage without heap allocation. The 5-point `f32` and 8-point `f32` and `f64`
+FFTs use NEON on little-endian AArch64 and SSE2 on x86-64 when enabled for the
+target. Both backends share a portable scalar fallback. The crate's unsafe
+code is confined to the SIMD module.
 
 ## Usage
 

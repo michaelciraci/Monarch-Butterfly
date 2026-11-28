@@ -335,7 +335,8 @@ fn optimized_paths_match_rustfft_in_both_directions() {
             Complex::new(T::from_f64(re).unwrap(), T::from_f64(im).unwrap())
         });
         let mut impulse = [Complex::new(T::zero(), T::zero()); N];
-        impulse[N / 4 - 1] = Complex::new(T::from_f64(0.75).unwrap(), T::from_f64(-0.25).unwrap());
+        impulse[(N / 4).saturating_sub(1)] =
+            Complex::new(T::from_f64(0.75).unwrap(), T::from_f64(-0.25).unwrap());
 
         let mut planner = rustfft::FftPlanner::new();
         let forward = planner.plan_fft_forward(N);
@@ -358,10 +359,14 @@ fn optimized_paths_match_rustfft_in_both_directions() {
         }
     }
 
+    check::<3, _>(1e-6_f32);
+    check::<5, _>(1e-6_f32);
     check::<8, _>(1e-5_f32);
+    check::<15, _>(1e-5_f32);
     check::<16, _>(1e-5_f32);
     check::<18, _>(1e-5_f32);
     check::<24, _>(1e-5_f32);
+    check::<25, _>(1e-5_f32);
     check::<27, _>(1e-5_f32);
     check::<32, _>(1e-5_f32);
     check::<48, _>(1e-5_f32);
