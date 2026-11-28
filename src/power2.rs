@@ -3,7 +3,10 @@ use core::array::from_fn;
 use num_complex::Complex;
 use num_traits::Float;
 
-use crate::{fixed, twiddle, Roots};
+use crate::{
+    fixed,
+    roots::{twiddle, Roots},
+};
 
 #[inline]
 pub(super) fn transform<const N: usize, const INVERSE: bool, T: Float>(

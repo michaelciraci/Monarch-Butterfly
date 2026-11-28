@@ -1,9 +1,9 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
-use fftw::{
-    array::AlignedVec,
-    plan::{C2CPlan, C2CPlan32},
-    types::{Flag, Sign},
-};
+// use fftw::{
+//     array::AlignedVec,
+//     plan::{C2CPlan, C2CPlan32},
+//     types::{Flag, Sign},
+// };
 use monarch_butterfly::*;
 use num_complex::Complex;
 use rustfft::FftPlanner;
@@ -30,16 +30,16 @@ macro_rules! generate_comparison {
             })
         });
 
-        let n = $idx;
-        let mut plan: C2CPlan32 = C2CPlan::aligned(&[n], Sign::Forward, Flag::MEASURE).unwrap();
-        let mut a = AlignedVec::new(n);
-        let mut o = AlignedVec::new(n);
+        // let n = $idx;
+        // let mut plan: C2CPlan32 = C2CPlan::aligned(&[n], Sign::Forward, Flag::MEASURE).unwrap();
+        // let mut a = AlignedVec::new(n);
+        // let mut o = AlignedVec::new(n);
 
-        $c.bench_function(&format!("fftw-{}", $idx), |b| {
-            b.iter(|| {
-                plan.c2c(&mut a, &mut o).unwrap();
-            })
-        });
+        // $c.bench_function(&format!("fftw-{}", $idx), |b| {
+        //     b.iter(|| {
+        //         plan.c2c(&mut a, &mut o).unwrap();
+        //     })
+        // });
     }};
 }
 

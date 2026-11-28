@@ -16,7 +16,7 @@ pub(super) fn try_fft<const N: usize, const INVERSE: bool, T: Float>(
 ) -> Option<[Complex<T>; N]> {
     let id = typeid::of::<T>();
     let single = id == TypeId::of::<f32>();
-    if !matches!(N, 5 | 8) || (!single && (N != 8 || id != TypeId::of::<f64>())) {
+    if !matches!(N, 3 | 5 | 8) || (!single && (N != 8 || id != TypeId::of::<f64>())) {
         return None;
     }
 
@@ -25,9 +25,11 @@ pub(super) fn try_fft<const N: usize, const INVERSE: bool, T: Float>(
     let dst = ptr::from_mut(&mut output);
     // SAFETY: The type check identifies the exact primitive (neither
     // contains lifetimes). Each repr(C) complex array has 2 * N contiguous
-    // scalars of that type. Input and output are disjoint, and N is 5 or 8.
+    // scalars of that type. Input and output are disjoint, and N is 3, 5, or 8.
     unsafe {
-        if N == 5 {
+        if N == 3 {
+            write_fft3::<INVERSE>(src.cast(), dst.cast());
+        } else if N == 5 {
             write_fft5::<INVERSE>(src.cast(), dst.cast());
         } else if single {
             write_fft8::<INVERSE, arch::F32Pair>(src.cast(), dst.cast());
@@ -49,6 +51,27 @@ trait Pair: Copy {
     fn turn<const INVERSE: bool>(self) -> Self;
     fn diagonals<const INVERSE: bool>(self) -> Self;
     fn join<const LEFT: usize, const RIGHT: usize>(self, rhs: Self) -> Self;
+}
+
+/// Both pointers must cover six scalars in disjoint buffers.
+#[inline(always)]
+unsafe fn write_fft3<const I: bool>(src: *const f32, dst: *mut f32) {
+    use arch::F32Pair;
+
+    // SAFETY: The overlapping loads contain [a, b] and [b, c]; both fit the input.
+    let ab = unsafe { F32Pair::load(src) };
+    let bc = unsafe { F32Pair::load(src.add(2)) };
+    let a = ab.join::<0, 0>(ab);
+    let cb = bc.join::<1, 0>(bc);
+    let sum = bc.add(cb);
+    let diff = bc.sub(cb);
+    let midpoint = a.sub(sum.scale(0.5, 0.5));
+    let skew = diff.turn::<I>().scale(0.866_025_4, 0.866_025_4);
+    // SAFETY: The first store writes bin 0, and the second writes bins 1 and 2.
+    unsafe {
+        a.add(sum).store_first(dst);
+        midpoint.add(skew).store(dst.add(2));
+    }
 }
 
 /// Both pointers must cover ten scalars in disjoint buffers.

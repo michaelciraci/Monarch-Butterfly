@@ -3,7 +3,7 @@ use core::array::from_fn;
 use num_complex::Complex;
 use num_traits::Float;
 
-use crate::{mixed_fft_into, Roots, MAX_FFT_LEN};
+use crate::{mixed::fft_into, roots::Roots, MAX_FFT_LEN};
 
 pub(super) const fn should_use(len: usize) -> bool {
     // For a convolution of length 2 * q with q prime, the mixed-radix path
@@ -126,7 +126,7 @@ pub(super) fn transform<const N: usize, const INVERSE: bool, T: Float>(
 
     let mut spectrum = [zero; N];
     let mut scratch = [zero; N];
-    mixed_fft_into::<N, false, true, _>(&samples, &mut spectrum, &mut scratch);
+    fft_into::<N, false, true, _>(&samples, &mut spectrum, &mut scratch);
     let dc = input[0] + spectrum[0];
     let kernel = &Rader::<N>::KERNEL;
     for (k, bin) in spectrum[..len].iter_mut().enumerate() {
@@ -140,7 +140,7 @@ pub(super) fn transform<const N: usize, const INVERSE: bool, T: Float>(
         *bin = *bin * Complex::new(T::from(factor.re).unwrap(), T::from(factor.im).unwrap());
     }
 
-    mixed_fft_into::<N, true, true, _>(&spectrum, &mut samples, &mut scratch);
+    fft_into::<N, true, true, _>(&spectrum, &mut samples, &mut scratch);
     let bins = &Rader::<N>::OUTPUT_BINS;
     from_fn(|k| {
         if k == 0 {

@@ -7,7 +7,10 @@ use super::*;
 use crate::{fft, fixed, ifft};
 
 fn scalar_fft<const N: usize, const I: bool, T: Float>(input: [Complex<T>; N]) -> [Complex<T>; N] {
-    if N == 5 {
+    if N == 3 {
+        let bins = fixed::fft3::<I, _>(from_fn(|i| input[i]));
+        from_fn(|i| bins[i])
+    } else if N == 5 {
         let bins = fixed::fft5::<I, _>(from_fn(|i| input[i]));
         from_fn(|i| bins[i])
     } else {
@@ -85,6 +88,7 @@ fn check_inputs<const N: usize, T: Float + FloatConst + Debug>() {
 
 #[test]
 fn both_precisions_match_scalar_for_impulses_special_values_and_random_inputs() {
+    check_inputs::<3, f32>();
     check_inputs::<5, f32>();
     check_inputs::<8, f32>();
     check_inputs::<8, f64>();
@@ -105,7 +109,7 @@ fn unaligned<const N: usize, T: Float + Debug>(write: unsafe fn(*const T, *mut T
     let dst = ptr::from_mut(&mut output.1);
     assert_ne!(src.addr() % 16, 0);
     assert_ne!(dst.addr() % 16, 0);
-    // SAFETY: N is 5 or 8, and each disjoint array has 2 * N scalar lanes.
+    // SAFETY: N is 3, 5, or 8, and each disjoint array has 2 * N scalar lanes.
     unsafe { write(src.cast(), dst.cast()) };
     assert_eq!(output.1, scalar_fft::<N, false, _>(input.1));
     assert_eq!((output.0, output.2), (guard, guard));
@@ -113,6 +117,7 @@ fn unaligned<const N: usize, T: Float + Debug>(write: unsafe fn(*const T, *mut T
 
 #[test]
 fn unaligned_loads_and_stores_preserve_guards() {
+    unaligned::<3, _>(write_fft3::<false>);
     unaligned::<5, _>(write_fft5::<false>);
     unaligned::<8, _>(write_fft8::<false, arch::F32Pair>);
     unaligned::<8, _>(write_fft8::<false, F64Pair>);
@@ -122,6 +127,7 @@ fn unaligned_loads_and_stores_preserve_guards() {
 fn dispatch_validates_length() {
     let input = [Complex::new(0.0_f32, 0.0); 9];
     assert!(try_fft::<9, false, _>(&input).is_none());
+    assert!(try_fft::<3, false, _>(&[Complex::new(0.0_f64, 0.0); 3]).is_none());
     assert!(try_fft::<5, false, _>(&[Complex::new(0.0_f64, 0.0); 5]).is_none());
     assert!(std::panic::catch_unwind(|| fft::<8, _, _>(&input[..7])).is_err());
     assert!(std::panic::catch_unwind(|| ifft::<8, _, _>(&input)).is_err());
