@@ -5,6 +5,8 @@
 use num_complex::Complex;
 use num_traits::{Float, FloatConst};
 
+mod fixed;
+
 const MAX_FFT_LEN: usize = 200;
 
 /// Computes the forward FFT of exactly `N` samples, for `1 <= N <= 200`.
@@ -30,6 +32,18 @@ fn transform<const N: usize, const INVERSE: bool, T: Float>(
         "FFT size must be between 1 and 200"
     );
 
+    if N == 48 {
+        let input = input.try_into().expect("validated 48-point input");
+        let output = fixed::transform::<48, 6, INVERSE, _>(input);
+        return core::array::from_fn(|i| output[i]);
+    }
+
+    if N == 96 {
+        let input = input.try_into().expect("validated 96-point input");
+        let output = fixed::transform::<96, 12, INVERSE, _>(input);
+        return core::array::from_fn(|i| output[i]);
+    }
+
     if N.is_power_of_two() {
         return radix2_fft::<N, INVERSE, _>(input);
     }
@@ -38,7 +52,7 @@ fn transform<const N: usize, const INVERSE: bool, T: Float>(
     let mut output = [zero; N];
     let mut scratch = [zero; N];
     let roots = core::array::from_fn(|i| twiddle::<INVERSE, T>(Roots::<N>::FULL[i]));
-    fft_stage::<N, 0, _>(input, &mut output, &mut scratch, &roots);
+    fft_stage::<N, INVERSE, 0, _>(input, &mut output, &mut scratch, &roots);
     output
 }
 
@@ -105,7 +119,23 @@ fn twiddle<const INVERSE: bool, T: Float>(root: Complex<f64>) -> Complex<T> {
     Complex::new(T::from(root.re).unwrap(), T::from(im).unwrap())
 }
 
-// At depth D, the first D prime factors of N have already been split off.
+const fn split_radix(len: usize) -> usize {
+    // The 6-point butterfly combines a pair of 3-point FFTs without twiddles.
+    if len % 6 == 0 {
+        return 6;
+    }
+
+    let mut radix = 2;
+    while radix * radix <= len {
+        if len % radix == 0 {
+            return radix;
+        }
+        radix += 1;
+    }
+    len
+}
+
+// At depth D, the plan has already split off its first D radices.
 struct Stage<const N: usize, const DEPTH: usize>;
 
 impl<const N: usize, const DEPTH: usize> Stage<N, DEPTH> {
@@ -115,13 +145,7 @@ impl<const N: usize, const DEPTH: usize> Stage<N, DEPTH> {
         let mut stride = 1;
         let mut level = 0;
         loop {
-            let mut radix = 2;
-            while radix * radix <= len && len % radix != 0 {
-                radix += 1;
-            }
-            if radix * radix > len {
-                radix = len;
-            }
+            let radix = split_radix(len);
             if level == DEPTH || len <= 1 {
                 break (len, radix, stride);
             }
@@ -133,7 +157,7 @@ impl<const N: usize, const DEPTH: usize> Stage<N, DEPTH> {
 }
 
 // Child stages exchange output and scratch. Only the input offset varies between rows.
-fn fft_stage<const N: usize, const DEPTH: usize, T: Float>(
+fn fft_stage<const N: usize, const INVERSE: bool, const DEPTH: usize, T: Float>(
     input: &[Complex<T>],
     output: &mut [Complex<T>],
     scratch: &mut [Complex<T>],
@@ -147,6 +171,10 @@ fn fft_stage<const N: usize, const DEPTH: usize, T: Float>(
     if len == 2 {
         output[0] = input[0] + input[stride];
         output[1] = input[0] - input[stride];
+        return;
+    }
+    if len == radix && fixed::has_butterfly(radix) {
+        fixed::butterfly::<INVERSE, _>(radix, |i| input[i * stride], |i, bin| output[i] = bin);
         return;
     }
     if len == radix {
@@ -186,12 +214,12 @@ fn fft_stage<const N: usize, const DEPTH: usize, T: Float>(
         // Stable const generics need literal successors. N <= 200 has at most
         // seven prime factors, so the deepest stage (depth 6) is always a leaf.
         match DEPTH {
-            0 => fft_stage::<N, 1, _>(samples, row, work, roots),
-            1 => fft_stage::<N, 2, _>(samples, row, work, roots),
-            2 => fft_stage::<N, 3, _>(samples, row, work, roots),
-            3 => fft_stage::<N, 4, _>(samples, row, work, roots),
-            4 => fft_stage::<N, 5, _>(samples, row, work, roots),
-            5 => fft_stage::<N, 6, _>(samples, row, work, roots),
+            0 => fft_stage::<N, INVERSE, 1, _>(samples, row, work, roots),
+            1 => fft_stage::<N, INVERSE, 2, _>(samples, row, work, roots),
+            2 => fft_stage::<N, INVERSE, 3, _>(samples, row, work, roots),
+            3 => fft_stage::<N, INVERSE, 4, _>(samples, row, work, roots),
+            4 => fft_stage::<N, INVERSE, 5, _>(samples, row, work, roots),
+            5 => fft_stage::<N, INVERSE, 6, _>(samples, row, work, roots),
             _ => unreachable!(),
         }
     }
@@ -203,6 +231,22 @@ fn fft_stage<const N: usize, const DEPTH: usize, T: Float>(
             let rotated = roots[k * stride] * odd[k];
             low[k] = even[k] + rotated;
             high[k] = even[k] - rotated;
+        }
+    } else if fixed::has_butterfly(radix) {
+        // Each column is a radix-point FFT after rotation by the stage twiddles.
+        for k in 0..width {
+            fixed::butterfly::<INVERSE, _>(
+                radix,
+                |row| {
+                    let value = scratch[row * width + k];
+                    if row == 0 || k == 0 {
+                        value
+                    } else {
+                        roots[row * k * stride] * value
+                    }
+                },
+                |bin, value| output[bin * width + k] = value,
+            );
         }
     } else {
         for (k, bin) in output[..len].iter_mut().enumerate() {

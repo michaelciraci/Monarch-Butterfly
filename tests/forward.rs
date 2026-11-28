@@ -325,6 +325,50 @@ fn radix2_128_matches_rustfft_in_both_directions() {
 }
 
 #[test]
+fn fixed_butterflies_match_rustfft_in_both_directions() {
+    fn check<const N: usize, T: num_traits::Float + num_traits::FloatConst + rustfft::FftNum>(
+        tolerance: T,
+    ) {
+        let dense: [Complex<T>; N] = core::array::from_fn(|i| {
+            let re = (i * 13 % 31) as f64 / 31.0 - 0.5;
+            let im = (i * i % 17) as f64 / 17.0 - 0.5;
+            Complex::new(T::from_f64(re).unwrap(), T::from_f64(im).unwrap())
+        });
+        let mut impulse = [Complex::new(T::zero(), T::zero()); N];
+        impulse[N / 4 - 1] = Complex::new(T::from_f64(0.75).unwrap(), T::from_f64(-0.25).unwrap());
+
+        let mut planner = rustfft::FftPlanner::new();
+        let forward = planner.plan_fft_forward(N);
+        let inverse = planner.plan_fft_inverse(N);
+        for input in [dense, impulse] {
+            for (actual, plan) in [
+                (fft::<N, _, _>(input), &forward),
+                (ifft::<N, _, _>(&input[..]), &inverse),
+            ] {
+                let mut expected = input;
+                plan.process(&mut expected);
+                for (bin, (actual, expected)) in actual.into_iter().zip(expected).enumerate() {
+                    assert!(
+                        (actual - expected).norm() < tolerance,
+                        "{N}-point {:?} bin {bin}: {actual:?} differs from {expected:?}",
+                        plan.fft_direction()
+                    );
+                }
+            }
+        }
+    }
+
+    check::<18, _>(1e-5_f32);
+    check::<27, _>(1e-5_f32);
+    check::<48, _>(1e-5_f32);
+    check::<48, _>(1e-11_f64);
+    check::<96, _>(1e-5_f32);
+    check::<96, _>(1e-11_f64);
+    check::<162, _>(2e-5_f32);
+    check::<198, _>(2e-5_f32);
+}
+
+#[test]
 fn prime_13_complex_impulse() {
     let mut input = [Complex::new(0.0_f32, 0.0); 13];
     input[5] = Complex::new(0.5, -1.0);
