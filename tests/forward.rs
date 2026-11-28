@@ -325,7 +325,7 @@ fn radix2_128_matches_rustfft_in_both_directions() {
 }
 
 #[test]
-fn fixed_butterflies_match_rustfft_in_both_directions() {
+fn optimized_paths_match_rustfft_in_both_directions() {
     fn check<const N: usize, T: num_traits::Float + num_traits::FloatConst + rustfft::FftNum>(
         tolerance: T,
     ) {
@@ -366,6 +366,12 @@ fn fixed_butterflies_match_rustfft_in_both_directions() {
     check::<96, _>(1e-11_f64);
     check::<162, _>(2e-5_f32);
     check::<198, _>(2e-5_f32);
+
+    check::<29, _>(1e-5_f32);
+    check::<97, _>(2e-5_f32);
+    check::<179, _>(2e-5_f32);
+    check::<199, _>(2e-5_f32);
+    check::<199, _>(1e-11_f64);
 }
 
 #[test]

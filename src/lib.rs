@@ -6,6 +6,7 @@ use num_complex::Complex;
 use num_traits::{Float, FloatConst};
 
 mod fixed;
+mod rader;
 
 const MAX_FFT_LEN: usize = 200;
 
@@ -48,12 +49,37 @@ fn transform<const N: usize, const INVERSE: bool, T: Float>(
         return radix2_fft::<N, INVERSE, _>(input);
     }
 
+    if const { rader::should_use(N) } {
+        let input = input.try_into().expect("validated Rader input");
+        return rader::transform::<N, INVERSE, _>(input);
+    }
+
     let zero = Complex::new(T::zero(), T::zero());
     let mut output = [zero; N];
     let mut scratch = [zero; N];
-    let roots = core::array::from_fn(|i| twiddle::<INVERSE, T>(Roots::<N>::FULL[i]));
-    fft_stage::<N, INVERSE, 0, _>(input, &mut output, &mut scratch, &roots);
+    mixed_fft_into::<N, INVERSE, false, _>(input, &mut output, &mut scratch);
     output
+}
+
+// Rader's convolution uses the first N - 1 entries of its N-entry buffers.
+fn mixed_fft_into<const N: usize, const INVERSE: bool, const CONVOLUTION: bool, T: Float>(
+    input: &[Complex<T>],
+    output: &mut [Complex<T>; N],
+    scratch: &mut [Complex<T>; N],
+) {
+    let roots = if CONVOLUTION {
+        &Roots::<N>::CONVOLUTION
+    } else {
+        &Roots::<N>::FULL
+    };
+    let roots = core::array::from_fn(|i| twiddle::<INVERSE, T>(roots[i]));
+    let len = N - usize::from(CONVOLUTION);
+    fft_stage::<N, INVERSE, CONVOLUTION, 0, _>(
+        &input[..len],
+        &mut output[..len],
+        &mut scratch[..len],
+        &roots,
+    );
 }
 
 fn radix2_fft<const N: usize, const INVERSE: bool, T: Float>(
@@ -100,12 +126,13 @@ struct Roots<const N: usize>;
 impl<const N: usize> Roots<N> {
     const FULL: [Complex<f64>; N] = make_roots(N);
     const HALF_TURN: [Complex<f64>; N] = make_roots(2 * N);
+    const CONVOLUTION: [Complex<f64>; N] = make_roots(N.saturating_sub(1));
 }
 
 const fn make_roots<const COUNT: usize>(period: usize) -> [Complex<f64>; COUNT] {
     let mut roots = [Complex::new(0.0, 0.0); COUNT];
     let mut k = 0;
-    while k < COUNT && period <= MAX_FFT_LEN {
+    while k < COUNT && period != 0 && period <= MAX_FFT_LEN {
         let angle = core::f64::consts::TAU * k as f64 / period as f64;
         roots[k] = Complex::new(trig_const::cos(angle), trig_const::sin(angle));
         k += 1;
@@ -136,12 +163,18 @@ const fn split_radix(len: usize) -> usize {
 }
 
 // At depth D, the plan has already split off its first D radices.
-struct Stage<const N: usize, const DEPTH: usize>;
+struct Stage<const N: usize, const CONVOLUTION: bool, const DEPTH: usize>;
 
-impl<const N: usize, const DEPTH: usize> Stage<N, DEPTH> {
+impl<const N: usize, const CONVOLUTION: bool, const DEPTH: usize> Stage<N, CONVOLUTION, DEPTH> {
     const SHAPE: (usize, usize, usize) = {
         // transform rejects unsupported sizes before entering any FFT stage.
-        let mut len = if N > MAX_FFT_LEN { 1 } else { N };
+        let mut len = if N > MAX_FFT_LEN {
+            1
+        } else if CONVOLUTION {
+            N.saturating_sub(1)
+        } else {
+            N
+        };
         let mut stride = 1;
         let mut level = 0;
         loop {
@@ -157,13 +190,19 @@ impl<const N: usize, const DEPTH: usize> Stage<N, DEPTH> {
 }
 
 // Child stages exchange output and scratch. Only the input offset varies between rows.
-fn fft_stage<const N: usize, const INVERSE: bool, const DEPTH: usize, T: Float>(
+fn fft_stage<
+    const N: usize,
+    const INVERSE: bool,
+    const CONVOLUTION: bool,
+    const DEPTH: usize,
+    T: Float,
+>(
     input: &[Complex<T>],
     output: &mut [Complex<T>],
     scratch: &mut [Complex<T>],
     roots: &[Complex<T>; N],
 ) {
-    let (len, radix, stride) = Stage::<N, DEPTH>::SHAPE;
+    let (len, radix, stride) = Stage::<N, CONVOLUTION, DEPTH>::SHAPE;
     if len <= 1 {
         output[0] = input[0];
         return;
@@ -214,12 +253,12 @@ fn fft_stage<const N: usize, const INVERSE: bool, const DEPTH: usize, T: Float>(
         // Stable const generics need literal successors. N <= 200 has at most
         // seven prime factors, so the deepest stage (depth 6) is always a leaf.
         match DEPTH {
-            0 => fft_stage::<N, INVERSE, 1, _>(samples, row, work, roots),
-            1 => fft_stage::<N, INVERSE, 2, _>(samples, row, work, roots),
-            2 => fft_stage::<N, INVERSE, 3, _>(samples, row, work, roots),
-            3 => fft_stage::<N, INVERSE, 4, _>(samples, row, work, roots),
-            4 => fft_stage::<N, INVERSE, 5, _>(samples, row, work, roots),
-            5 => fft_stage::<N, INVERSE, 6, _>(samples, row, work, roots),
+            0 => fft_stage::<N, INVERSE, CONVOLUTION, 1, _>(samples, row, work, roots),
+            1 => fft_stage::<N, INVERSE, CONVOLUTION, 2, _>(samples, row, work, roots),
+            2 => fft_stage::<N, INVERSE, CONVOLUTION, 3, _>(samples, row, work, roots),
+            3 => fft_stage::<N, INVERSE, CONVOLUTION, 4, _>(samples, row, work, roots),
+            4 => fft_stage::<N, INVERSE, CONVOLUTION, 5, _>(samples, row, work, roots),
+            5 => fft_stage::<N, INVERSE, CONVOLUTION, 6, _>(samples, row, work, roots),
             _ => unreachable!(),
         }
     }

@@ -10,7 +10,9 @@ samples in `f32` or `f64`. The transform size is a const generic. Power-of-two
 sizes use iterative radix-2 stages with compile-time butterfly widths. Other
 sizes use mixed-radix stages whose lengths, radices, and strides are derived
 from `N` at compile time. The FFT twiddle factors are also computed at compile
-time. Prime stages pair inputs whose twiddle factors are complex conjugates.
+time. Selected prime lengths use Rader's algorithm with compile-time
+permutations and convolution coefficients. The direct prime kernel pairs
+inputs whose twiddle factors are complex conjugates.
 The library requires Rust 1.85 or newer, supports `no_std`, and uses stack
 storage without heap allocation or unsafe code.
 
