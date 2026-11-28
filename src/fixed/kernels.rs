@@ -63,6 +63,31 @@ pub(crate) fn fft3<const INVERSE: bool, T: Float>(input: [Complex<T>; 3]) -> [Co
     [a + sum, midpoint + skew, midpoint - skew]
 }
 
+/// A 3-by-3 Cooley–Tukey transform in natural order.
+#[inline(always)]
+pub(crate) fn fft9<const INVERSE: bool, T: Float>(x: [Complex<T>; 9]) -> [Complex<T>; 9] {
+    use crate::roots::twiddle;
+
+    let a = fft3::<INVERSE, _>([x[0], x[3], x[6]]);
+    let b = fft3::<INVERSE, _>([x[1], x[4], x[7]]);
+    let c = fft3::<INVERSE, _>([x[2], x[5], x[8]]);
+    let roots = &Roots::<9>::FULL;
+    let zero = fft3::<INVERSE, _>([a[0], b[0], c[0]]);
+    let one = fft3::<INVERSE, _>([
+        a[1],
+        b[1] * twiddle::<INVERSE, T>(roots[1]),
+        c[1] * twiddle::<INVERSE, T>(roots[2]),
+    ]);
+    let two = fft3::<INVERSE, _>([
+        a[2],
+        b[2] * twiddle::<INVERSE, T>(roots[2]),
+        c[2] * twiddle::<INVERSE, T>(roots[4]),
+    ]);
+    [
+        zero[0], one[0], two[0], zero[1], one[1], two[1], zero[2], one[2], two[2],
+    ]
+}
+
 #[inline(always)]
 pub(crate) fn fft5<const INVERSE: bool, T: Float>(
     [a, b, c, d, e]: [Complex<T>; 5],

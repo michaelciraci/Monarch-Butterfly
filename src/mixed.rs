@@ -96,6 +96,11 @@ fn fft_stage<
         output[1] = input[0] - input[stride];
         return;
     }
+    if len == 9 {
+        let bins = fixed::fft9::<INVERSE, _>(core::array::from_fn(|i| input[i * stride]));
+        output[..9].copy_from_slice(&bins);
+        return;
+    }
     if matches!(len, 4 | 8 | 16 | 32) {
         power2::transform_small::<INVERSE, _>(len, |i| input[i * stride], output);
         return;

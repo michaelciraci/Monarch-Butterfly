@@ -362,12 +362,17 @@ fn optimized_paths_match_rustfft_in_both_directions() {
     check::<3, _>(1e-6_f32);
     check::<5, _>(1e-6_f32);
     check::<8, _>(1e-5_f32);
+    check::<9, _>(1e-5_f32);
+    check::<9, _>(1e-11_f64);
     check::<15, _>(1e-5_f32);
     check::<16, _>(1e-5_f32);
     check::<18, _>(1e-5_f32);
     check::<24, _>(1e-5_f32);
     check::<25, _>(1e-5_f32);
     check::<27, _>(1e-5_f32);
+    check::<27, _>(1e-11_f64);
+    check::<81, _>(2e-5_f32);
+    check::<81, _>(1e-11_f64);
     check::<32, _>(1e-5_f32);
     check::<48, _>(1e-5_f32);
     check::<48, _>(1e-11_f64);

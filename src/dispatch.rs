@@ -55,6 +55,11 @@ fn transform_general<const N: usize, const INVERSE: bool, T: Float>(
         "FFT size must be between 1 and 200"
     );
 
+    if N == 9 {
+        let bins = fixed::fft9::<INVERSE, _>(core::array::from_fn(|i| input[i]));
+        return core::array::from_fn(|i| bins[i]);
+    }
+
     if N == 48 {
         let input = input.try_into().expect("validated 48-point input");
         let output = fixed::transform::<48, 6, INVERSE, _>(input);
