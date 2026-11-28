@@ -6,6 +6,7 @@ use num_complex::Complex;
 use num_traits::{Float, FloatConst};
 
 mod fixed;
+mod power2;
 mod rader;
 
 const MAX_FFT_LEN: usize = 200;
@@ -46,7 +47,8 @@ fn transform<const N: usize, const INVERSE: bool, T: Float>(
     }
 
     if N.is_power_of_two() {
-        return radix2_fft::<N, INVERSE, _>(input);
+        let input = input.try_into().expect("validated power-of-two input");
+        return power2::transform::<N, INVERSE, _>(input);
     }
 
     if const { rader::should_use(N) } {
@@ -82,50 +84,10 @@ fn mixed_fft_into<const N: usize, const INVERSE: bool, const CONVOLUTION: bool, 
     );
 }
 
-fn radix2_fft<const N: usize, const INVERSE: bool, T: Float>(
-    input: &[Complex<T>],
-) -> [Complex<T>; N] {
-    if N == 1 {
-        return core::array::from_fn(|i| input[i]);
-    }
-    let shift = usize::BITS - N.trailing_zeros();
-    let mut output = core::array::from_fn(|i| input[i.reverse_bits() >> shift]);
-
-    // In bit-reversed order, adjacent halves form the next butterfly.
-    // The supported sizes need at most seven stages. Shorter FFTs skip the rest.
-    radix2_stage::<1, INVERSE, _>(&mut output);
-    radix2_stage::<2, INVERSE, _>(&mut output);
-    radix2_stage::<4, INVERSE, _>(&mut output);
-    radix2_stage::<8, INVERSE, _>(&mut output);
-    radix2_stage::<16, INVERSE, _>(&mut output);
-    radix2_stage::<32, INVERSE, _>(&mut output);
-    radix2_stage::<64, INVERSE, _>(&mut output);
-    output
-}
-
-#[inline(always)]
-fn radix2_stage<const HALF: usize, const INVERSE: bool, T: Float>(values: &mut [Complex<T>]) {
-    if values.len() < 2 * HALF {
-        return;
-    }
-    let roots: [_; HALF] =
-        core::array::from_fn(|k| twiddle::<INVERSE, T>(Roots::<HALF>::HALF_TURN[k]));
-    for block in values.chunks_exact_mut(2 * HALF) {
-        let (low, high) = block.split_at_mut(HALF);
-        for k in 0..HALF {
-            let even = low[k];
-            let odd = if k == 0 { high[k] } else { high[k] * roots[k] };
-            low[k] = even + odd;
-            high[k] = even - odd;
-        }
-    }
-}
-
 struct Roots<const N: usize>;
 
 impl<const N: usize> Roots<N> {
     const FULL: [Complex<f64>; N] = make_roots(N);
-    const HALF_TURN: [Complex<f64>; N] = make_roots(2 * N);
     const CONVOLUTION: [Complex<f64>; N] = make_roots(N.saturating_sub(1));
 }
 
@@ -210,6 +172,10 @@ fn fft_stage<
     if len == 2 {
         output[0] = input[0] + input[stride];
         output[1] = input[0] - input[stride];
+        return;
+    }
+    if matches!(len, 4 | 8 | 16 | 32) {
+        power2::transform_small::<INVERSE, _>(len, |i| input[i * stride], output);
         return;
     }
     if len == radix && fixed::has_butterfly(radix) {

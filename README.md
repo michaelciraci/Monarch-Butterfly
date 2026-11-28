@@ -7,8 +7,8 @@
 
 Monarch Butterfly computes forward and inverse FFTs of 1 through 200 complex
 samples in `f32` or `f64`. The transform size is a const generic. Power-of-two
-sizes use iterative radix-2 stages with compile-time butterfly widths. Other
-sizes use mixed-radix stages whose lengths, radices, and strides are derived
+sizes use fixed-array kernels that can also serve as mixed-radix
+subtransforms. Mixed-radix stage lengths, radices, and strides are derived
 from `N` at compile time. The FFT twiddle factors are also computed at compile
 time. Selected prime lengths use Rader's algorithm with compile-time
 permutations and convolution coefficients. The direct prime kernel pairs

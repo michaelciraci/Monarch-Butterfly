@@ -306,7 +306,7 @@ fn round_trip_complex_f32() {
 }
 
 #[test]
-fn radix2_128_matches_rustfft_in_both_directions() {
+fn power_of_two_128_matches_rustfft_in_both_directions() {
     let input: [Complex<f32>; 128] = core::array::from_fn(|i| {
         Complex::new(
             (i * 11 % 31) as f32 / 16.0 - 1.0,
@@ -358,13 +358,20 @@ fn optimized_paths_match_rustfft_in_both_directions() {
         }
     }
 
+    check::<8, _>(1e-5_f32);
+    check::<16, _>(1e-5_f32);
     check::<18, _>(1e-5_f32);
+    check::<24, _>(1e-5_f32);
     check::<27, _>(1e-5_f32);
+    check::<32, _>(1e-5_f32);
     check::<48, _>(1e-5_f32);
     check::<48, _>(1e-11_f64);
+    check::<64, _>(1e-5_f32);
     check::<96, _>(1e-5_f32);
     check::<96, _>(1e-11_f64);
     check::<162, _>(2e-5_f32);
+    check::<192, _>(2e-5_f32);
+    check::<193, _>(2e-5_f32);
     check::<198, _>(2e-5_f32);
 
     check::<29, _>(1e-5_f32);

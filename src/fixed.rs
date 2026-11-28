@@ -3,7 +3,7 @@ use core::array::from_fn;
 use num_complex::Complex;
 use num_traits::Float;
 
-use crate::{twiddle, Roots};
+use crate::{power2, twiddle, Roots};
 
 const COLS: usize = 8;
 
@@ -73,6 +73,10 @@ fn finish_column<
     // Literal row indices let the compiler fold each rotation before the butterfly.
     let rotate = |row: usize| multiply_twiddle::<N, INVERSE, _>(column[row], COLUMN * row);
     match ROWS {
+        4 => {
+            let bins = fft4::<INVERSE, _>([column[0], rotate(1), rotate(2), rotate(3)]);
+            from_fn(|i| bins[i])
+        }
         6 => {
             let bins = fft6::<INVERSE, _>([
                 column[0],
@@ -101,6 +105,27 @@ fn finish_column<
             ]);
             from_fn(|i| bins[i])
         }
+        16 => {
+            let bins = power2::fft16::<INVERSE, _>([
+                column[0],
+                rotate(1),
+                rotate(2),
+                rotate(3),
+                rotate(4),
+                rotate(5),
+                rotate(6),
+                rotate(7),
+                rotate(8),
+                rotate(9),
+                rotate(10),
+                rotate(11),
+                rotate(12),
+                rotate(13),
+                rotate(14),
+                rotate(15),
+            ]);
+            from_fn(|i| bins[i])
+        }
         _ => unreachable!(),
     }
 }
@@ -120,6 +145,14 @@ fn multiply_twiddle<const N: usize, const INVERSE: bool, T: Float>(
         return -value;
     }
 
+    rotate::<N, INVERSE, T>(value, power)
+}
+
+#[inline(always)]
+pub(super) fn rotate<const N: usize, const INVERSE: bool, T: Float>(
+    value: Complex<T>,
+    power: usize,
+) -> Complex<T> {
     let root = twiddle::<INVERSE, T>(Roots::<N>::FULL[power]);
     if cfg!(any(
         all(target_arch = "aarch64", target_feature = "neon"),
@@ -150,7 +183,7 @@ fn fft6<const INVERSE: bool, T: Float>(x: [Complex<T>; 6]) -> [Complex<T>; 6] {
 }
 
 #[inline(always)]
-fn fft8<const INVERSE: bool, T: Float>(input: [Complex<T>; 8]) -> [Complex<T>; 8] {
+pub(super) fn fft8<const INVERSE: bool, T: Float>(input: [Complex<T>; 8]) -> [Complex<T>; 8] {
     let [a, b, c, d, e, f, g, h] = input;
     let even = fft4::<INVERSE, _>([a + e, b + f, c + g, d + h]);
     let odd = fft4::<INVERSE, _>([
@@ -189,7 +222,7 @@ fn fft3<const INVERSE: bool, T: Float>(input: [Complex<T>; 3]) -> [Complex<T>; 3
 }
 
 #[inline(always)]
-fn fft4<const INVERSE: bool, T: Float>(input: [Complex<T>; 4]) -> [Complex<T>; 4] {
+pub(super) fn fft4<const INVERSE: bool, T: Float>(input: [Complex<T>; 4]) -> [Complex<T>; 4] {
     let [a, b, c, d] = input;
     let even_sum = a + c;
     let even_diff = a - c;
