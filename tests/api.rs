@@ -11,16 +11,14 @@ fn rejects_wrong_input_lengths_on_each_dispatch_path() {
     check::<3>();
     check::<5>();
     check::<8>();
-    check::<48>();
-    check::<64>();
-    check::<97>();
-    check::<15>();
+    check::<9>();
+    check::<10>();
 }
 
 #[test]
 fn rejects_unsupported_sizes() {
     assert!(std::panic::catch_unwind(|| fft::<0, _, _>([Complex::new(0.0_f32, 0.0); 0])).is_err());
     assert!(
-        std::panic::catch_unwind(|| ifft::<201, _, _>([Complex::new(0.0_f32, 0.0); 201])).is_err()
+        std::panic::catch_unwind(|| ifft::<11, _, _>([Complex::new(0.0_f32, 0.0); 11])).is_err()
     );
 }

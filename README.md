@@ -4,19 +4,16 @@
 
 # Monarch Butterfly
 
-Monarch Butterfly computes forward and inverse FFTs of 1 through 200 complex
-samples in `f32` or `f64`. The transform size is a const generic. Power-of-two
-sizes use fixed-array kernels that can also serve as mixed-radix
-subtransforms. Mixed-radix stage lengths, radices, and strides are derived
-from `N` at compile time. The FFT twiddle factors are also computed at compile
-time. Selected prime lengths use Rader's algorithm with compile-time
-permutations and convolution coefficients. The direct prime kernel pairs
-inputs whose twiddle factors are complex conjugates.
-The library requires Rust 1.85 or newer, supports `no_std`, and uses stack
-storage without heap allocation. The 3- and 5-point `f32` and 8-point `f32` and `f64`
-FFTs use NEON on little-endian AArch64 and SSE2 on x86-64 when enabled for the
-target. Both backends share a portable scalar fallback. The crate's unsafe
-code is confined to the SIMD module.
+This prototype computes forward and inverse FFTs for 1 through 10 complex
+samples. The size is a const generic, and twiddle factors are computed at
+compile time on stable Rust. A size dispatcher selects fixed-size kernels or
+composes smaller transforms. The composition takes its factors as separate
+const parameters, so intermediate arrays have exact lengths without unstable
+generic const expressions. The 5-point kernel shares work between paired bins;
+the 7-point leaf pairs conjugate terms in a direct DFT.
+
+The library supports `no_std` and uses stack storage without heap allocation.
+It is an example implementation, not a performance-optimized release.
 
 ## Usage
 
@@ -34,8 +31,5 @@ let scaled_input = ifft::<8, _, _>(spectrum);
 
 The inverse is unnormalized. Applying `ifft` to the result of `fft` scales
 the original samples by `N`.
-
-Enable the optional `std` Cargo feature to use fused multiply-add in larger
-direct prime butterflies when the compilation target supports hardware FMA.
 
 The original FFT kernels were inspired by Elliott Mahler’s [RustFFT](https://github.com/ejmahler/RustFFT).

@@ -20,8 +20,5 @@ num-complex = { version = "0.4", default-features = false, features = ["libm"] }
 num-traits = { version = "0.2", default-features = false, features = ["libm"] }
 trig-const = { version = "0.4", default-features = false }
 
-[target.'cfg(any(all(target_arch = "aarch64", target_endian = "little"), target_arch = "x86_64"))'.dependencies]
-typeid = "1.0.3"
-
 [dev-dependencies]
 rustfft = "6.2.0"
